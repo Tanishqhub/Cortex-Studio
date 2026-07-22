@@ -11,3 +11,24 @@
 - Failed attempt of understanding from youtube, no one explaining in simple language
 - I guess I need to ask claude to get started and then reverse-engineer my understanding
 - Let's initialize a git repo and get started
+
+# Git Set up:
+- Initialized a git repo Cortex-Studio
+
+# App plan: (Switched to Opus 4.8)
+- Asked claude to build a phase wise development & deployment plan
+- Prompt:
+i have created a plan folder;  add phase1.txt , phase2.txt and so on files that will have clear instructions for AI agents
+to stick to the plan and develop without halucinations, Devops part I will handle, I need instructions for the same,
+I am thinking of AWS free tire as of now, and for contanarization we will go with podman. Cloudflare for database and other things
+
+Output:
+File	                    Purpose
+README_plan.txt	            Index + reading order
+00_agent_ground_rules.txt	The anti-hallucination guardrails. Read-first, overrides everything on conflict
+phase1.txt	                Skeleton + auth (Flask+React one origin, session cookie + werkzeug)
+phase2.txt               	Workspaces + A2L parser + /signals API
+phase3.txt                	Monaco C editor + signal panel + signals.h generation
+phase4.txt	                Compilation + Podman sandbox + threat model (most-graded)
+phase5.txt	                Marketplace + README/walkthrough/test-accounts
+06_devops_instructions.txt	Your DevOps guide: AWS free tier + rootless Podman + Cloudflare

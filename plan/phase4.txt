@@ -1,0 +1,162 @@
+========================================================================
+PHASE 4 - COMPILATION + SANDBOX  (THE SHARP EDGE / MOST GRADED PHASE)
+========================================================================
+Prereq: Phase 3 done. Read 00_agent_ground_rules.txt. Obey it.
+
+READ THIS FIRST
+---------------
+The brief says plainly: "Compiling code submitted by an authenticated
+stranger on your server is the sharp edge of this assignment. We would
+like to see that you noticed." You are running arbitrary C from strangers
+through a real compiler on your box. The GRADE here is mostly about your
+THREAT MODEL and honest mitigations, not about compiler feature depth.
+The winning answer format is literally: "I identified X, mitigated Y, and
+here is why Z is still open."
+
+GOAL
+----
+From the frontend, the user triggers a build of their workspace's C source
+against the ARM GCC toolchain. Compiler stdout+stderr (warnings AND errors,
+not a pass/fail badge) are streamed/shown in the UI. On success, an ARM
+binary is produced and stored (Phase 5 lists it). All compilation runs
+inside a locked-down Podman sandbox with a bounded worker pool.
+
+LOCKED TOOLCHAIN + BUILD CONTRACT
+---------------------------------
+- Compiler: arm-none-eabi-gcc (GNU Arm Embedded Toolchain). Link in
+  README to the official source (developer.arm.com / the Arm GNU Toolchain
+  downloads). Verify the exact binary name/flags by running --version and
+  --help in the sandbox image; do NOT guess flags.
+- Target profile (fixed, documented): Cortex-M4, Thumb, freestanding
+  bare-metal. Provide, checked into the repo, a MINIMAL and FIXED:
+      build/startup.c   (reset handler stub + vector table minimum)
+      build/link.ld     (minimal linker script)
+  so builds are deterministic and don't depend on user-supplied linker
+  bits. The user's code + generated signals.h + these fixed files compile
+  together.
+- Reference build command (VERIFY before trusting):
+      arm-none-eabi-gcc -mcpu=cortex-m4 -mthumb -Wall -Wextra \
+        -ffreestanding -nostdlib -O0 -g \
+        -T build/link.ld build/startup.c user.c -o out.elf
+      arm-none-eabi-objcopy -O binary out.elf out.bin
+  Capture ALL compiler output. Produce out.elf (and out.bin via objcopy)
+  as the artifact. If full linking proves too deep for the time budget,
+  the documented fallback is: compile to an object/ELF and clearly state
+  that in DECISIONS.md as a conscious cut (allowed by the brief).
+
+THREAT MODEL (write this into docs/SECURITY.md — this IS the deliverable)
+-------------------------------------------------------------------------
+Enumerate at least these, with mitigation + residual risk:
+  T1 Malicious C consumes CPU forever (while(1))        -> wall-clock
+     timeout on the container (e.g. 15s) + --cpus limit; container killed.
+  T2 Memory exhaustion / fork bomb                      -> --memory,
+     --memory-swap, --pids-limit; ulimit; killed on breach.
+  T3 Reading host/other users' files                    -> rootless Podman,
+     read-only rootfs, dedicated per-build tmp workdir mounted, NO host
+     mounts beyond the single build dir; drop all Linux caps.
+  T4 Network exfiltration / callbacks                   -> --network none.
+  T5 Container escape / privilege escalation            -> rootless
+     Podman, --user non-root, --security-opt no-new-privileges,
+     --cap-drop=ALL, seccomp default profile.
+  T6 Disk filling from huge outputs/artifacts           -> cap source
+     size, cap captured-output length, cap artifact size, tmpfs quota.
+  T7 Compiler/preprocessor abuse (#include "/etc/passwd", -I tricks,
+     #embed, gcc plugins)                               -> fixed compiler
+     invocation controlled by US (user cannot pass flags); compile in an
+     isolated dir; no sensitive files present in the container anyway.
+  T8 Server overload via many concurrent builds         -> BOUNDED worker
+     pool / queue (e.g. N workers, queued jobs, per-user rate limit).
+  For each: state what is NOT covered (residual risk). Honesty scores.
+
+
+TASKS
+-----
+1. Build the sandbox image (Podman/Containerfile).
+   - A minimal image with arm-none-eabi-gcc + binutils only. Non-root
+     user. No shells/tools you don't need if avoidable.
+   - Verify inside it: `arm-none-eabi-gcc --version` and a trivial
+     compile actually works. Paste the output.
+   DoD: image builds; toolchain confirmed working INSIDE the container.
+
+2. Build runner (backend/app/compiler.py).
+   - Given (source code, generated signals.h, workspace/user ids):
+       a) create an isolated temp build dir; write user.c, signals.h, and
+          copy the fixed startup.c + link.ld.
+       b) run the compile INSIDE a Podman container with ALL these flags
+          (verify each exists): --network none, --memory=<cap>,
+          --pids-limit=<cap>, --cpus=<cap>, --read-only + a tmpfs/mounted
+          workdir, --cap-drop=ALL, --security-opt=no-new-privileges,
+          --user <nonroot>, and a HARD wall-clock timeout that kills the
+          container.
+       c) capture stdout+stderr+exit code+duration.
+       d) on success, pull out.elf/out.bin from the workdir into storage.
+   - The command line is fully controlled by the server. The user NEVER
+     supplies compiler flags or file paths.
+   DoD: a good program compiles and yields a real ARM ELF (verify with
+   `file out.elf` -> "ELF 32-bit ... ARM"). A `while(1){}` program is
+   killed by the timeout. A syntax error returns the real gcc error text.
+   Paste ALL THREE observations.
+
+3. Build model + trigger API.
+   - models.py: Build(id, workspace_id, user_id, status[queued|running|
+     success|error], created_at, duration_ms, exit_code, log_text,
+     artifact_ref[nullable]).
+   - POST /api/workspaces/<id>/builds -> enqueue a build of current source
+     (owner only). Returns a build id.
+   - Bounded worker pool: a fixed-size pool (e.g. ThreadPoolExecutor or a
+     small queue) so only N builds run at once; excess builds queue. Add a
+     simple per-user rate limit.
+   DoD: two rapid builds don't run more than N concurrently (observe/log).
+
+4. Stream/return compiler output to the UI.
+   - Preferred: stream logs (Server-Sent Events or chunked) so the UI
+     shows output as it happens. Acceptable simpler fallback: poll
+     GET /api/builds/<id> for status + full log, and show it. Either way
+     the UI MUST show warnings AND errors verbatim, not just pass/fail.
+   - Frontend: a "Compile" button + a log console panel in the workspace
+     view showing the streamed/polled output and final status/duration.
+   DoD: in the browser, compiling shows the real gcc warnings/errors and
+   the final success/fail + duration.
+
+5. Security doc.
+   - docs/SECURITY.md: the full threat model above with mitigation +
+     residual risk per item, and the exact Podman flags used. This is a
+     required README deliverable ("security posture, stated honestly").
+   DoD: SECURITY.md exists and matches what the code actually does (no
+   aspirational claims — only mitigations truly in place).
+
+6. Tests.
+   - A test that a syntactically-bad program yields status=error with
+     non-empty log. A test that the timeout path marks status=error (can
+     mock/short-timeout). Do not over-test; a couple meaningful ones.
+   DoD: pytest passes; paste output.
+
+
+GUARDRAILS FOR THIS PHASE
+-------------------------
+- NEVER run user code/compiler directly on the host process. Always inside
+  the sandbox container. No exceptions.
+- NEVER let the user control the compiler command line, flags, include
+  paths, or filenames. The server builds the exact argv.
+- NEVER claim a mitigation in SECURITY.md that isn't actually implemented.
+  If you couldn't do seccomp/rootless in time, SAY SO as residual risk.
+- ALWAYS enforce the wall-clock timeout and resource caps; verify the
+  while(1) case is actually killed before claiming done.
+- Cap captured log length and artifact size; strangers WILL try to abuse.
+- If Podman isn't available in the dev environment, still write the code
+  against Podman and note in the hand-off that end-to-end sandbox verify
+  must happen on the deploy host (see 06_devops).
+
+
+DEFINITION OF DONE (PHASE)
+--------------------------
+[ ] Sandbox image builds; arm-none-eabi-gcc verified inside it.
+[ ] Good code -> real ARM ELF (proven with `file`); syntax error -> real
+    gcc error shown; while(1) -> killed by timeout. All three OBSERVED.
+[ ] Builds run inside Podman with network off + resource caps + dropped
+    caps + non-root, via a bounded worker pool.
+[ ] UI streams/shows warnings AND errors + duration + status.
+[ ] docs/SECURITY.md matches the real implementation (honest residuals).
+[ ] Tests pass. DECISIONS.md + README updated. Incremental commits.
+[ ] Hand-off note with real command output (esp. the 3 observations).
+========================================================================

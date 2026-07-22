@@ -1,0 +1,107 @@
+========================================================================
+PHASE 3 - CODE EDITOR + SIGNAL DISCOVERY + HEADER GENERATION
+========================================================================
+Prereq: Phase 2 done. Read 00_agent_ground_rules.txt. Obey it.
+
+GOAL
+----
+Inside an open workspace, the user gets an in-browser C editor with syntax
+highlighting, can see the available signals from the uploaded A2L, and the
+signals are made consumable by their C code via a generated header. Source
+code persists to the workspace. No compilation yet (that's Phase 4).
+
+DESIGN DECISION TO IMPLEMENT (brief 4.4 "how signals reach the code")
+---------------------------------------------------------------------
+Chosen mechanism: GENERATE A C HEADER (signals.h) from the parsed A2L, and
+make it available at compile time (Phase 4 injects it). Justify in
+DECISIONS.md: a header is the most natural, transparent way for C code to
+"see" the signals; it needs no runtime and maps 1:1 to how embedded devs
+actually work. (Alternatives to mention as rejected: accessor stub .c
+files, or compile-time -D injection — more magic, less transparent.)
+
+Header mapping rules (write these down, keep deterministic):
+    A2L datatype -> C type via <stdint.h>:
+        UBYTE   -> uint8_t     SBYTE  -> int8_t
+        UWORD   -> uint16_t    SWORD  -> int16_t
+        ULONG   -> uint32_t    SLONG  -> int32_t
+        A_UINT64-> uint64_t    A_INT64-> int64_t
+        FLOAT32_IEEE -> float  FLOAT64_IEEE -> double
+        (unknown datatype -> emit a comment "/* unsupported type X */"
+         and skip that signal; do NOT guess a type.)
+    - Sanitise names into valid C identifiers: 'ctx[0].state' is NOT a
+      legal C identifier, so map to e.g. ctx_0__state, and keep a comment
+      with the original A2L name. Ensure uniqueness after sanitising.
+    - MATRIX_DIM n -> array type (e.g. uint8_t name[n];).
+    - Emit an extern declaration per signal (they're ECU memory-mapped;
+      for THIS webapp we are not flashing, so the header is a compile-time
+      contract, not a real linkage — say so in a header banner comment).
+
+
+TASKS
+-----
+1. Editor component (frontend).
+   - Use @monaco-editor/react with language="c". Do NOT hand-roll an
+     editor (brief forbids it as the point of the exercise).
+   - Load the workspace's saved source on open; default to a small starter
+     template that #includes "signals.h" and has a main()/entry stub.
+   DoD: editing works, C syntax is highlighted.
+
+2. Source persistence API.
+   - PUT /api/workspaces/<id>/source  {code} -> save (owner only).
+   - GET /api/workspaces/<id>/source  -> load (owner only).
+   - Autosave on a debounce OR explicit Save button (pick one, keep
+     simple). Enforce a max source size (e.g. 256 KB).
+   DoD: edit, refresh, code persists.
+
+3. Signal discovery panel (frontend).
+   - A sidebar/list in the editor view that calls
+     GET /api/workspaces/<id>/signals (from Phase 2) and shows: name,
+     direction, datatype, limits. Make it searchable/filterable since the
+     sample has 173 entries.
+   - Clicking a signal inserts its (sanitised) C identifier at the cursor,
+     OR at minimum copies it. This satisfies "signals discoverable from
+     within the editing experience."
+   DoD: panel lists the 173 sample signals; clicking inserts the name.
+
+4. Header generation endpoint + module.
+   - backend/app/header_gen.py: signals list -> signals.h string using the
+     mapping rules above. Deterministic, ordered, with a banner comment
+     explaining what it is and that it's a compile-time contract.
+   - GET /api/workspaces/<id>/signals.h -> returns the generated header
+     (text/plain), owner only. Also (re)generated whenever a new A2L is
+     uploaded. Phase 4 will drop this file into the build sandbox.
+   DoD: hitting the endpoint for the sample returns a valid header with
+   sane C types; spot-check current_gear -> uint8_t, an array signal ->
+   correct [n], a dotted name -> sanitised identifier + original-name
+   comment.
+
+5. Tests.
+   - test_header_gen.py: given a small parsed signal set, assert the
+     datatype mapping, name sanitisation, uniqueness, and array handling;
+     assert an unknown datatype is skipped with a comment (not guessed).
+   DoD: pytest passes; paste output.
+
+6. Docs: DECISIONS.md — header-file choice + rejected alternatives, name
+   sanitisation rules, the "not real linkage / no flashing" caveat.
+   README architecture: add the editor + header-gen flow.
+
+
+GUARDRAILS FOR THIS PHASE
+-------------------------
+- Do NOT build a custom editor. Monaco (or CodeMirror) only.
+- Do NOT invent C types for unknown A2L datatypes — skip + comment.
+- Do NOT produce a header with illegal C identifiers (dots/brackets).
+- Do NOT trigger any compilation here; that's Phase 4.
+- Keep the signal panel usable at 173 rows (search/scroll).
+
+
+DEFINITION OF DONE (PHASE)
+--------------------------
+[ ] Monaco C editor loads/saves workspace source.
+[ ] Signal panel lists sample signals, searchable, insert-on-click.
+[ ] signals.h generated correctly with documented type mapping + name
+    sanitisation; unknown types skipped with a comment.
+[ ] header_gen tests pass (paste output).
+[ ] DECISIONS.md + README updated. Incremental commits.
+[ ] Hand-off note with real output.
+========================================================================

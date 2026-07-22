@@ -1,0 +1,138 @@
+========================================================================
+PHASE 1 - PROJECT SKELETON + AUTHENTICATION
+========================================================================
+Prereq: Read 00_agent_ground_rules.txt first. Obey it.
+
+GOAL
+----
+A running Flask + React app, served on ONE origin (Flask serves the built
+React SPA), with a working sign-up / log-in / log-out flow and per-user
+identity. No workspaces, no A2L, no compile yet. Just: a stranger can
+create an account, log in, see a "logged in as X" page, and log out.
+
+WHY THIS SHAPE (do not deviate without asking)
+----------------------------------------------
+- One origin (Flask serves React's static build) => session cookies work
+  with no CORS/SameSite headaches. This is a deliberate simplification;
+  document it.
+- Session cookie (httpOnly, Secure in prod, SameSite=Lax) + werkzeug
+  password hashing (pbkdf2 or scrypt). No JWT, no OAuth. The brief says a
+  small honest auth beats an ambitious one that leaks sessions.
+
+
+REPO LAYOUT TO CREATE
+---------------------
+    /backend
+        app.py                (Flask app factory / entrypoint)
+        /app
+            __init__.py       (create_app, extensions init)
+            models.py         (SQLAlchemy models)
+            auth.py           (auth blueprint: /api/auth/*)
+            config.py         (reads from env; no secrets in code)
+        requirements.txt
+        /migrations           (Flask-Migrate)
+        /tests
+            test_auth.py
+    /frontend
+        (Vite React app)
+        src/
+            api.js            (fetch wrapper, credentials: 'include')
+            pages/Login.jsx
+            pages/Signup.jsx
+            App.jsx
+    /docs
+        DECISIONS.md          (append design decisions here)
+    .gitignore
+    README.md                 (start it now, grow it every phase)
+
+
+TASKS
+-----
+1. Init repo hygiene.
+   - git init (if not already). Create .gitignore covering: __pycache__,
+     *.pyc, venv/, .venv/, node_modules/, frontend/dist/, *.sqlite,
+     *.db, .env, /backend/instance/.
+   - Create docs/DECISIONS.md with a heading and the first entry:
+     "Auth = session cookie + werkzeug hashing; React served by Flask
+     (single origin). Rejected JWT/OAuth as over-scoped for the brief."
+   DoD: git status is clean of junk; DECISIONS.md exists.
+
+2. Backend skeleton.
+   - Python venv, Flask, Flask-SQLAlchemy, Flask-Migrate, python-dotenv.
+   - config.py reads SECRET_KEY, DATABASE_URL (default sqlite), and an
+     ENV flag from environment. NEVER hardcode SECRET_KEY.
+   - create_app() app factory pattern. A GET /api/health returns
+     {"status":"ok"}.
+   DoD: `flask run` (or python app.py) starts; curl /api/health -> 200 ok.
+   VERIFY by actually running it and pasting output in the hand-off.
+
+3. User model + DB.
+   - models.py: User(id, email UNIQUE, password_hash, created_at).
+     Store ONLY the hash (werkzeug.security generate_password_hash /
+     check_password_hash). Never store plaintext.
+   - flask db init/migrate/upgrade -> creates the table.
+   DoD: migration applied; table exists in the sqlite file.
+
+4. Auth endpoints (blueprint /api/auth).
+   - POST /api/auth/signup  {email, password} -> creates user, starts
+     session. Reject duplicate email (409) and weak/empty input (400).
+   - POST /api/auth/login   {email, password} -> validates, sets session
+     cookie. Wrong creds -> 401 (generic message, do not leak which field
+     was wrong).
+   - POST /api/auth/logout  -> clears session.
+   - GET  /api/auth/me      -> current user or 401.
+   - Session cookie flags: httpOnly=True, SameSite='Lax',
+     Secure=True when ENV=prod (env-driven).
+   DoD: full signup->me->logout->me(401) cycle works via curl. Paste it.
+
+5. A reusable "login_required" guard.
+   - Decorator that returns 401 JSON if no valid session. Will be reused
+     by every protected route in later phases.
+   DoD: an example protected test route returns 401 when logged out,
+   200 when logged in.
+
+6. Frontend skeleton (Vite React).
+   - Login and Signup pages hitting the auth API. api.js MUST use
+     fetch(..., { credentials: 'include' }) so the cookie flows.
+   - A trivial authed landing page: "Logged in as <email>" + Logout btn.
+   - Client-side route guard: if /api/auth/me is 401, redirect to /login.
+   DoD: in a browser you can sign up, land on the authed page, refresh
+   (still logged in), log out, and get bounced to /login.
+
+7. Serve React from Flask (single origin).
+   - `npm run build` -> frontend/dist. Flask serves dist/index.html at /
+     and static assets, with a catch-all that returns index.html for
+     client-side routes (but NOT for /api/*).
+   - Document the dev workflow too: in dev, Vite dev server proxies /api
+     to Flask (vite.config proxy). In prod, Flask serves the built SPA.
+   DoD: after build, visiting Flask's root in a browser loads the SPA and
+   the whole auth flow works on that single port.
+
+8. Tests (a FEW meaningful ones — do not chase coverage).
+   - test_auth.py: signup success, duplicate email rejected, login wrong
+     password -> 401, /api/auth/me requires session.
+   DoD: pytest passes; paste output.
+
+9. README: add "Run locally" section (backend venv+run, frontend
+   build/dev, env vars needed). Keep it accurate to what you actually did.
+
+
+GUARDRAILS FOR THIS PHASE
+-------------------------
+- Do NOT add workspace/A2L/compile code. That's later phases.
+- Do NOT invent a fancy auth library. werkzeug + Flask session only.
+- Do NOT commit the SECRET_KEY or any .env. Provide .env.example instead.
+- Do NOT store passwords in plaintext or with a home-rolled hash.
+- Verify every "DoD" by running it. No assumptions.
+
+
+DEFINITION OF DONE (PHASE)
+--------------------------
+[ ] Clean-checkout run works per README.
+[ ] Signup/login/logout/me all verified in a real browser AND via curl.
+[ ] Passwords stored only as werkzeug hashes.
+[ ] pytest auth tests pass.
+[ ] DECISIONS.md updated. Incremental commits made.
+[ ] Hand-off note written (what built / cut / next-agent notes / real
+    command output).
+========================================================================

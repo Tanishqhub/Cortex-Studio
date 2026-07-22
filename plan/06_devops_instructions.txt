@@ -1,0 +1,152 @@
+========================================================================
+06 - DEVOPS INSTRUCTIONS  (Tanishq handles this; agents build to it)
+Stack intent: AWS free tier + Podman (rootless) + Cloudflare
+========================================================================
+
+This file is for the human running deployment. The app code (phases 1-5)
+must stay provider-agnostic and read everything from environment variables.
+Nothing below should force a code change if the app was built to the
+"storage interface + env config" rules in 00_agent_ground_rules.txt.
+
+--------------------------------------------------------------------
+0. WHAT "DEPLOYED" MEANS FOR THIS ASSIGNMENT
+--------------------------------------------------------------------
+Deliverable #1: a hosted, PUBLIC URL evaluators can reach + creds for >=2
+test accounts. Reachability over the public internet is MANDATORY. If a
+free-tier limit forces a compromise, that's fine — just document it in the
+README (the brief explicitly treats documented cost/platform limits as
+legitimate constraints).
+
+--------------------------------------------------------------------
+1. HOST: AWS FREE TIER (EC2)
+--------------------------------------------------------------------
+- Use a single EC2 instance (free-tier eligible, e.g. t2.micro/t3.micro,
+  Amazon Linux 2023 or Ubuntu). NOTE: t2.micro has 1 vCPU / 1 GB RAM —
+  compiling in a resource-capped container on 1 GB is tight. Mitigations:
+    * add swap (e.g. 2 GB swapfile) so the box doesn't OOM under a build;
+    * keep the build worker pool SMALL (N=1 or 2);
+    * set the container --memory cap low but workable for gcc.
+  If 1 GB proves unworkable, document it and either add swap or note the
+  free-tier constraint in the README. Do not silently exceed free tier.
+- Security group: inbound 443 (and 80 for redirect) from anywhere; 22
+  from your IP only. Do NOT expose the Flask port (e.g. 5000) or Podman
+  directly to the internet — front it (see Cloudflare Tunnel below) or put
+  nginx/caddy in front for TLS.
+- Keep the OS patched; disable password SSH, key-only.
+
+--------------------------------------------------------------------
+2. CONTAINERIZATION: PODMAN (ROOTLESS)
+--------------------------------------------------------------------
+Two distinct container concerns — keep them separate:
+
+  (A) The APP container(s): Flask (serving the built React SPA) + its DB
+      access. Long-running service. Managed with systemd (podman generate
+      systemd, or Quadlet .container units) so it restarts on boot/crash.
+
+  (B) The BUILD SANDBOX container: short-lived, one per compile job,
+      launched BY the app (phase4 compiler.py) for each build. This is the
+      security boundary. Requirements (rootless Podman):
+        - rootless mode (run as a non-root Linux user; the app process
+          shells out to `podman run` as that user).
+        - per-build flags the app must pass (verify each on the host):
+            --network none
+            --memory <cap>  --memory-swap <cap>
+            --pids-limit <cap>
+            --cpus <cap>
+            --read-only  + a mounted/limited tmpfs workdir for the build
+            --cap-drop=ALL
+            --security-opt=no-new-privileges
+            --user <nonroot-in-image>
+            a hard wall-clock timeout that KILLS the container
+        - the sandbox image = arm-none-eabi-gcc + binutils only.
+      Verify on the host: `podman run --rm <image> arm-none-eabi-gcc
+      --version` and confirm rootless (`podman info` -> rootless: true).
+- Make sure the app-container user can launch nested build containers
+  rootlessly (lingering enabled: `loginctl enable-linger <user>`; check
+  subuid/subgid maps exist for that user).
+- OPEN RISK TO DOCUMENT: rootless nested containers + resource caps on a
+  1-vCPU box is the weakest link. State in SECURITY.md what is and isn't
+  covered on this specific host.
+
+--------------------------------------------------------------------
+3. CLOUDFLARE (database + storage + public URL)
+--------------------------------------------------------------------
+You said "Cloudflare for database and other things." Concretely map it:
+
+  (a) PUBLIC URL / TLS  -> Cloudflare Tunnel (cloudflared) is the cleanest
+      free way to expose the EC2 app to a real https hostname WITHOUT
+      opening inbound ports or buying a cert. Run cloudflared on the
+      instance pointing at the local Flask/nginx port. Result: a stable
+      public https URL on a Cloudflare-managed domain. This satisfies
+      "reachable over the public internet."
+      (Alt: nginx/caddy + Let's Encrypt + the EC2 public DNS — more setup.)
+
+  (b) ARTIFACT / BINARY STORAGE -> Cloudflare R2 (S3-compatible, free
+      tier). The app's storage interface should use an S3 client (boto3)
+      pointed at the R2 endpoint. Binaries and uploaded .a2l files live in
+      R2, not on the tiny EC2 disk. App reads R2 creds/endpoint/bucket
+      from env vars ONLY.
+
+  (c) DATABASE -> honest guidance:
+      - Cloudflare D1 is SQLite-over-HTTP designed for Workers; it is NOT
+        a drop-in for SQLAlchemy from a Flask app on EC2. Using it would
+        force an awkward HTTP-driver rewrite. RECOMMENDATION: do NOT use
+        D1 as the primary app DB unless you specifically want to.
+      - Recommended DB options that keep SQLAlchemy simple:
+          * SQLite file on the EC2 instance (on an EBS volume) — simplest,
+            fine for this assignment's scale; document the single-instance
+            durability caveat.
+          * A managed free Postgres (e.g. Neon / Supabase free tier) via
+            DATABASE_URL — more "real", still free, survives instance loss.
+      - Whatever you pick, the app already reads DATABASE_URL from env, so
+        this is a config choice, not a code change.
+      => Decide DB explicitly and write the choice + trade-off in README.
+
+  Cloudflare also gives you WAF/rate-limiting/basic DDoS in front for free
+  — worth enabling since you're running a public compile endpoint.
+
+--------------------------------------------------------------------
+4. CONFIG / SECRETS (all via environment — never in git)
+--------------------------------------------------------------------
+The app must read AT LEAST these env vars (agents: keep a .env.example):
+    SECRET_KEY               (Flask session signing — strong random)
+    ENV                      (dev|prod; prod => Secure cookies)
+    DATABASE_URL             (sqlite:///... or postgres://...)
+    STORAGE_BACKEND          (local|r2/s3)
+    S3_ENDPOINT_URL          (R2 endpoint) [if r2/s3]
+    S3_BUCKET / S3_KEY / S3_SECRET / S3_REGION   [if r2/s3]
+    SANDBOX_IMAGE            (build sandbox image tag)
+    BUILD_TIMEOUT_SECONDS    (e.g. 15)
+    BUILD_MEM_LIMIT / BUILD_PIDS_LIMIT / BUILD_CPUS
+    MAX_WORKERS              (bounded build pool size, e.g. 1-2)
+Store real values in a root-only .env on the instance or in AWS SSM
+Parameter Store. NEVER commit them.
+
+--------------------------------------------------------------------
+5. DEPLOY FLOW (suggested, adjust to taste)
+--------------------------------------------------------------------
+1. On the instance: install podman (rootless), cloudflared; create the
+   non-root service user; enable linger; add swap.
+2. Build the sandbox image on the instance: `podman build -t <SANDBOX_IMAGE>
+   -f build/Containerfile .` and verify arm-none-eabi-gcc runs inside it.
+3. Build the frontend (`npm run build`) so Flask can serve dist/.
+4. Run the app container(s) via podman + systemd/Quadlet; point them at
+   R2 + DATABASE_URL via env.
+5. Start cloudflared tunnel -> local app port -> public https hostname.
+6. Seed/create the 2 test accounts; verify login on the PUBLIC URL.
+7. Smoke-test the full flow on the public URL (upload sample .a2l ->
+   signals -> compile -> marketplace -> download).
+8. Put the public URL + test creds in the private submission note.
+
+--------------------------------------------------------------------
+6. THINGS TO VERIFY BEFORE CALLING IT DEPLOYED
+--------------------------------------------------------------------
+[ ] Public https URL loads the SPA from a clean browser (no VPN/localhost).
+[ ] Both test accounts log in on the public URL.
+[ ] A compile actually runs INSIDE a rootless Podman sandbox on the host
+    (check `podman ps` during a build) with the caps/network-off applied.
+[ ] while(1) test program is killed by the timeout ON THE HOST.
+[ ] Artifact downloads from R2 (or wherever) return real binary bytes.
+[ ] No secrets in the repo; .env only on the box / in SSM.
+[ ] Free-tier limits respected; any forced compromise is in the README.
+========================================================================

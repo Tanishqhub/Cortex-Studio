@@ -1,0 +1,141 @@
+========================================================================
+00 - AGENT GROUND RULES  (READ THIS BEFORE EVERY PHASE)
+Project: Browser-Based C Development Environment for Embedded Targets
+Bosch SDV Technical Assignment
+========================================================================
+
+PURPOSE OF THIS FILE
+--------------------
+Every AI agent (and human) working on this repo MUST obey these rules.
+They exist to keep the build honest, incremental, and free of the
+"confident nonsense" failure mode. If a rule here conflicts with a phase
+file, THIS FILE WINS. If anything is ambiguous, STOP and ask the human
+(Tanishq) — do not invent an answer.
+
+The evaluators said explicitly: "you must understand and can defend every
+line you submit." Therefore NOTHING may go into this repo that the author
+cannot explain. That is the #1 acceptance criterion.
+
+
+ANTI-HALLUCINATION RULES (NON-NEGOTIABLE)
+-----------------------------------------
+1.  DO NOT invent APIs, function names, library methods, CLI flags, or
+    file formats. If you are not 100% sure a function/flag exists, verify
+    it (run --help, read the installed package, check the docs) BEFORE
+    writing code that depends on it.
+
+2.  DO NOT fabricate facts about the A2L file. The single source of truth
+    is: resources/Reference_a2l.a2l. Ground truth for THIS sample:
+      - 173 MEASUREMENT blocks, 0 CHARACTERISTIC blocks.
+      - Datatypes seen: UBYTE, SBYTE, UWORD, SWORD?, SLONG, ULONG,
+        A_UINT64. (The ASAM spec also defines SWORD, FLOAT32_IEEE,
+        FLOAT64_IEEE — support them but do NOT claim they appear in the
+        sample unless you grep and confirm.)
+      - Signal names can contain dots and brackets: e.g. "ctx[0].state",
+        "AppStatusListFrame620.app_uid". Your parser MUST NOT choke on
+        these.
+      - Some MEASUREMENTs have MATRIX_DIM (arrays) and a COMPU_METHOD
+        that references a COMPU_VTAB (enums, e.g. current_gear ->
+        gear_state_t). Handle or skip gracefully; never crash.
+
+3.  If you don't support a part of a format/spec: FAIL LOUDLY AND CLEARLY
+    ("CHARACTERISTIC parsing not implemented; 0 found") rather than
+    silently guessing. Graceful, informative failure is explicitly worth
+    MORE marks than brittle full coverage.
+
+4.  NEVER hardcode a result to make a test pass. NEVER stub a function to
+    return fake data and present it as working. If something is not done,
+    say "NOT IMPLEMENTED" in the code and in the phase hand-off notes.
+
+5.  Do not claim something works unless you actually ran it. "Compiles
+    and returns 200" must be observed, not assumed. Paste the real
+    command output into the phase hand-off notes.
+
+
+SCOPE DISCIPLINE
+----------------
+6.  Build ONLY what the current phase file asks for. Do not "improve"
+    future phases early. Do not add features not in the brief.
+
+7.  These are EXPLICITLY OUT OF SCOPE (from the assignment). Do not build
+    them, do not spend a single token on them:
+      - Actual flashing / hardware-in-the-loop / real ECU communication
+      - Full ASAM A2L spec coverage
+      - Real-time collaborative editing
+      - Payment / licensing / rating in the marketplace
+      - Polished visual design (clean & functional is enough)
+      - High test coverage numbers (a FEW meaningful tests only)
+
+8.  When you consciously cut scope, WRITE IT DOWN in the phase hand-off
+    notes AND in docs/DECISIONS.md with the reason. The evaluators will
+    ask about cuts; undocumented cuts look like bugs, documented cuts
+    look like judgement.
+
+
+LOCKED TECH DECISIONS (do not change without asking Tanishq)
+------------------------------------------------------------
+    Backend:        Flask (Python 3.11+), SQLAlchemy ORM, Flask-Migrate
+    Frontend:       React (Vite), @monaco-editor/react for the editor
+    Auth:           Session cookie (httpOnly, signed) + werkzeug password
+                    hashing. React build is SERVED BY FLASK so everything
+                    is one origin (avoids CORS/cookie pain). See phase1.
+    Compiler:       arm-none-eabi-gcc (GNU Arm Embedded Toolchain).
+                    Target: Cortex-M4, thumb, freestanding/bare-metal.
+    Sandbox:        Podman rootless container per build (details phase4).
+    DB (local):     SQLite via SQLAlchemy.
+    DB/storage/host (prod): Tanishq's DevOps call — AWS free tier + Podman
+                    + Cloudflare (R2 for artifacts, Tunnel for public URL).
+                    See 06_devops_instructions.txt. Keep all storage
+                    access behind an interface so the backend does not
+                    care whether it's local disk or Cloudflare R2.
+
+    => The app code must NEVER assume a specific cloud provider. Read
+       config from environment variables only. No secrets in the repo.
+
+
+GIT / COMMIT DISCIPLINE (the evaluators grade this)
+---------------------------------------------------
+9.  Commit INCREMENTALLY with clear messages. The brief says: "commit
+    incrementally rather than in one drop — we like to see how a project
+    evolved." One giant commit is a red flag.
+
+10. Suggested commit granularity: one commit per numbered task inside a
+    phase, or per logical unit. Use conventional-ish messages:
+      feat(parser): extract MEASUREMENT name/type/address
+      fix(compile): enforce 10s timeout on gcc subprocess
+      docs(readme): document compilation threat model
+    Do NOT commit secrets, node_modules, venvs, build artifacts, or the
+    SQLite db. Maintain .gitignore.
+
+11. Never force-push or rewrite shared history. Never run destructive git
+    commands without asking.
+
+
+DEFINITION OF DONE FOR EVERY PHASE
+----------------------------------
+A phase is DONE only when ALL of these are true:
+    [ ] Every task's "Definition of Done" checkbox is met and OBSERVED.
+    [ ] It runs from a clean checkout following the README steps.
+    [ ] New decisions/cuts are appended to docs/DECISIONS.md.
+    [ ] A hand-off note is written at the bottom of the phase file (or in
+        plan/handoffs/phaseN.md) listing: what was built, what was cut,
+        what the next agent needs to know, and REAL command output proving
+        it works.
+    [ ] Code is committed incrementally.
+
+If you cannot meet Definition of Done, do NOT mark the phase done. Report
+the blocker to Tanishq.
+
+
+HOW TO USE THE PHASE FILES
+--------------------------
+Phases are ordered and mostly sequential:
+    phase1 -> auth + skeleton
+    phase2 -> workspaces + A2L parser + signals API
+    phase3 -> editor + signal discovery + header generation
+    phase4 -> compilation + sandbox (the hard/graded part)
+    phase5 -> marketplace + artifacts
+    06_devops -> deployment (Tanishq handles, but instructions provided)
+
+Read this file, then the target phase file, then work. When in doubt: ask.
+========================================================================

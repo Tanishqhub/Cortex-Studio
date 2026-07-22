@@ -1,0 +1,153 @@
+========================================================================
+PHASE 2 - WORKSPACES + A2L UPLOAD + PARSER + SIGNALS API
+========================================================================
+Prereq: Phase 1 done. Read 00_agent_ground_rules.txt. Obey it.
+
+GOAL
+----
+An authenticated user can create/open named workspaces, upload ONE .a2l
+file per workspace, and get back a parsed list of signals via an API.
+This is the domain core. Correctness + graceful failure matter more than
+completeness.
+
+GROUND TRUTH (verify against resources/Reference_a2l.a2l)
+--------------------------------------------------------
+- Sample has 173 MEASUREMENT blocks and 0 CHARACTERISTIC blocks.
+- A2L structure: /begin PROJECT -> /begin MODULE -> blocks.
+  Each block is:  /begin <KIND> <name> "<desc>" ... /end <KIND>
+- A MEASUREMENT block looks like:
+      /begin MEASUREMENT current_gear "measurement for symbol current_gear"
+        UBYTE gear_state_t 0 0 0 2
+        ECU_ADDRESS 0x280058C0
+        SYMBOL_LINK "current_gear" 0
+      /end MEASUREMENT
+  The line after the name+desc is:
+      <DATATYPE> <COMPU_METHOD_or_NO_COMPU_METHOD> <res> <res> <lo> <hi>
+  So: datatype = UBYTE; conversion = gear_state_t (an enum via COMPU_VTAB)
+  or NO_COMPU_METHOD; lower limit = 0; upper limit = 2 (or 255, etc).
+- ECU_ADDRESS line gives a hex address.
+- Some blocks add MATRIX_DIM <n> (it's an array). Optional SYMBOL_LINK.
+- Names may contain '.', '[', ']' (e.g. ctx[0].state). Handle them.
+- CHARACTERISTIC blocks: same /begin.../end shape but different fields.
+  The sample has none — parser MUST report "0 characteristics" cleanly,
+  not crash and not fake any.
+
+DATA MODEL: WHAT A "SIGNAL" IS FOR THE API
+------------------------------------------
+Normalise each parsed block into:
+    {
+      "name":       str,          # e.g. "current_gear"
+      "kind":       "MEASUREMENT" | "CHARACTERISTIC",
+      "direction":  "input" | "output",
+        # Decision to make & document: MEASUREMENT = readable = "input"
+        # to the C program (a sensor value the code reads);
+        # CHARACTERISTIC = writable calib param = "output"/"tunable".
+        # Pick a convention, write it in DECISIONS.md, be consistent.
+      "datatype":   str,          # e.g. "UBYTE"
+      "address":    str|null,     # e.g. "0x280058C0"
+      "limits":     {"lower": num|null, "upper": num|null},
+      "compu_method": str|null,   # e.g. "gear_state_t" or null
+      "matrix_dim": int|null      # array length if present
+    }
+
+
+TASKS
+-----
+1. Workspace model + ownership.
+   - models.py: Workspace(id, name, owner_id -> User, created_at).
+     SourceFile / A2LFile can be columns or related rows. A workspace
+     owns: one A2L file, the C source, and (later) builds/artifacts.
+   - Multiple workspaces per user allowed.
+   - EVERY workspace route must enforce ownership: a user can only touch
+     workspaces where owner_id == current_user.id. This is the isolation
+     boundary the README must describe. Return 404 (not 403) for
+     other users' workspaces to avoid leaking existence.
+   DoD: migration applied; ownership check unit-tested.
+
+2. Workspace CRUD API (all login_required + ownership-checked).
+   - POST   /api/workspaces            {name} -> create
+   - GET    /api/workspaces            -> list caller's workspaces
+   - GET    /api/workspaces/<id>       -> details (owner only)
+   - DELETE /api/workspaces/<id>       -> delete (owner only)  [optional]
+   DoD: curl cycle as two different users proves isolation (user B gets
+   404 on user A's workspace). Paste it.
+
+3. A2L upload endpoint.
+   - POST /api/workspaces/<id>/a2l  (multipart file upload).
+   - Enforce: extension .a2l, a max size (e.g. 5 MB — the sample is
+     ~1156 lines / small; pick a sane cap), and store the raw file via
+     the storage interface (local disk now; R2 later — see devops).
+   - Reject non-.a2l or oversize with 400 and a clear message.
+   - Store the raw file AND trigger the parser (task 4), persisting the
+     parsed signal list (e.g. JSON column or a Signal table).
+   DoD: uploading resources/Reference_a2l.a2l succeeds; uploading a .txt
+   is rejected with a clear error.
+
+4. THE A2L PARSER (backend/app/a2l_parser.py) — the graded core.
+   Scope (from brief): handle MEASUREMENT and CHARACTERISTIC names,
+   datatypes, and addresses. Do NOT attempt full ASAM coverage.
+   - Approach: a block scanner. Walk lines; when you see
+     "/begin MEASUREMENT" start capturing until the matching
+     "/end MEASUREMENT". Same for CHARACTERISTIC. Ignore everything else
+     (COMPU_METHOD, COMPU_VTAB, etc.) EXCEPT: optionally build a lookup of
+     COMPU_VTAB names so you can note a signal is an enum. Optional, not
+     required — skip if time-poor and say so.
+   - From each MEASUREMENT block extract: name (token after the kind),
+     datatype (first token of the definition line), compu_method (second
+     token; NO_COMPU_METHOD => null), limits (last two numbers on that
+     line), ECU_ADDRESS (from its line), MATRIX_DIM if present.
+   - ROBUSTNESS REQUIREMENTS (test these):
+       * names with '.', '[', ']' parse correctly.
+       * a block missing ECU_ADDRESS => address=null, no crash.
+       * an unknown datatype => keep the raw string, do not crash.
+       * a truncated/garbage file => raise a clean ParseError with a
+         helpful message; the endpoint returns 422 with that message.
+       * 0 CHARACTERISTIC blocks => characteristics=[] (normal, not error).
+   - Return a summary too: counts per kind, list of datatypes seen, and a
+     list of any blocks it skipped/couldn't fully parse (for the
+     "graceful informative failure" credit).
+   DoD: parsing the real sample yields 173 measurements, 0
+   characteristics, correct fields spot-checked against the file
+   (current_gear -> UBYTE, 0x280058C0, limits 0..2, compu gear_state_t).
+
+5. Signals API (the required endpoint from brief 4.4).
+   - GET /api/workspaces/<id>/signals -> the normalised signal list +
+     summary (counts, datatypes, skipped). Owner only.
+   - This is what the editor will consume in Phase 3.
+   DoD: endpoint returns well-formed JSON for the uploaded sample.
+
+6. Tests (a few meaningful ones over the parser + API — this is where the
+   brief WANTS tests).
+   - test_parser.py: feed a tiny inline A2L snippet + a truncated one +
+     one with a dotted name; assert extracted fields and graceful error.
+   - test_signals_api.py: upload sample, GET signals, assert 173 count
+     and a known signal's fields; assert cross-user 404.
+   DoD: pytest passes; paste output.
+
+7. Docs: append to DECISIONS.md — the input/output direction convention,
+   why you chose a line-scanner over a full grammar, and exactly what A2L
+   subset you support + what you skip. Update README architecture section.
+
+
+GUARDRAILS FOR THIS PHASE
+-------------------------
+- Do NOT write a full ASAM A2L grammar/parser. Line-scan the two block
+  kinds only. Over-engineering here is a scope violation.
+- Do NOT fake signal data. If a field is absent, it's null.
+- Do NOT let a malformed file 500 the server. Malformed => 422 + message.
+- Do NOT skip the cross-user isolation check. It is a graded security
+  point ("workspace isolation boundary").
+- Verify the 173/0 counts against the actual sample before claiming done.
+
+
+DEFINITION OF DONE (PHASE)
+--------------------------
+[ ] Workspaces CRUD with enforced per-user ownership (verified w/ 2 users).
+[ ] .a2l upload with validation; sample uploads OK, junk rejected.
+[ ] Parser extracts name/kind/datatype/address/limits, handles dotted
+    names + missing fields + garbage, reports skipped blocks.
+[ ] GET .../signals returns 173 measurements for the sample.
+[ ] Parser + API tests pass (paste output).
+[ ] DECISIONS.md + README updated. Incremental commits.
+[ ] Hand-off note written with real command output.
+========================================================================

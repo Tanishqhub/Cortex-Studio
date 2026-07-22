@@ -1,0 +1,114 @@
+========================================================================
+PHASE 5 - ARTIFACT MARKETPLACE + POLISH FOR SUBMISSION
+========================================================================
+Prereq: Phase 4 done. Read 00_agent_ground_rules.txt. Obey it.
+
+GOAL
+----
+Successful builds land in a shared, browsable catalogue ("marketplace")
+inside the app. Each entry carries the required metadata and a downloadable
+binary. Then finalise everything the evaluators actually grade: README,
+decisions, walkthrough, test accounts.
+
+REQUIRED PER-ARTIFACT METADATA (from brief 4.7 — all mandatory)
+---------------------------------------------------------------
+    - the binary itself, DOWNLOADABLE
+    - the FULL compilation log for that build
+    - creation date & time
+    - build duration
+    - the workspace AND user it originated from
+
+
+TASKS
+-----
+1. Artifact storage + model.
+   - On a successful build (Phase 4), persist the binary via the storage
+     interface (local disk in dev; Cloudflare R2 / S3-compatible in prod —
+     see 06_devops). Store a reference on the Build/Artifact row.
+   - Artifact fields: link to Build (=> has log, duration, timestamps,
+     workspace, user), binary size, download ref, filename.
+   DoD: a successful build produces a stored, retrievable binary.
+
+2. Marketplace API.
+   - GET /api/marketplace            -> list artifacts (browsable
+     catalogue) with the required metadata per entry.
+   - GET /api/artifacts/<id>         -> one artifact's full detail incl.
+     full build log.
+   - GET /api/artifacts/<id>/download-> the binary as a file download
+     (Content-Disposition attachment; correct content-type).
+   - VISIBILITY MODEL: decide and DOCUMENT it. Options: (a) all artifacts
+     public/browsable to any logged-in user (simplest, matches "shared
+     catalogue"); (b) owner-only; (c) public but download owner-only.
+     Pick one, justify in DECISIONS.md, implement it consistently. The
+     brief explicitly says "interpret the visibility/sharing model as you
+     see fit — just tell us what you decided."
+   DoD: endpoints return the required metadata; download yields the real
+   binary bytes (verify size/`file`).
+
+3. Marketplace UI.
+   - A browsable list/table page: name/workspace/user/date/duration/status
+     + a Download button + a way to view the full build log for that entry.
+   - Reachable from the main nav after login.
+   DoD: in the browser you can browse builds, open one, read its full log,
+   and download the binary.
+
+4. End-to-end smoke of the WHOLE flow (the walkthrough path).
+   Run and confirm, as a real user in the browser:
+     log in -> create workspace -> upload the sample .a2l -> see the 173
+     signals -> write C using a signal -> compile -> watch the log ->
+     find the resulting artifact in the marketplace -> download it.
+   DoD: the full chain works without manual DB fiddling. Note any rough
+   edges honestly in known-limitations.
+
+5. Two test accounts + seed.
+   - Provide/seed at least TWO test accounts (brief requires creds for >=2
+     accounts). A seed script or documented signup steps. Put the creds in
+     the private submission note (NOT committed to a public repo).
+   DoD: both accounts can log in on the deployed URL.
+
+6. FINALISE THE README (this is graded heavily). Must cover:
+     - how to run locally from a clean checkout (verify by doing it)
+     - architecture overview + a diagram (ASCII/mermaid is fine)
+     - key design decisions + alternatives rejected (pull from DECISIONS.md)
+     - security posture around compilation, stated honestly (link
+       docs/SECURITY.md)
+     - known limitations, bugs, and what was cut for time
+     - roughly how long you spent and where it went
+     - attribution of any reused snippets/libraries
+   DoD: a stranger could clone and run it using only the README.
+
+7. Walkthrough artefact (brief deliverable 4).
+   - Either a 5-10 min screen recording OR annotated screenshots of the
+     end-to-end flow (same chain as task 4). Store link/files with the
+     submission.
+   DoD: walkthrough exists and shows the full flow.
+
+8. Final test pass + tidy.
+   - Run the whole test suite; paste output. Remove dead code, TODOs that
+     are actually done, stray console logs. Ensure .gitignore still clean.
+   DoD: tests green; repo tidy.
+
+
+GUARDRAILS FOR THIS PHASE
+-------------------------
+- Do NOT add payment/licensing/rating to the marketplace (out of scope).
+- Do NOT commit test-account passwords to a public repo.
+- Do NOT overstate in the README. Known bugs/cuts belong in the README —
+  the evaluators reward honesty and WILL ask about cuts.
+- Verify downloads return real binary bytes, not an error page.
+- Re-run the full end-to-end flow after any last change.
+
+
+DEFINITION OF DONE (PHASE / PROJECT)
+------------------------------------
+[ ] Successful builds appear in a browsable marketplace with ALL required
+    metadata (binary, full log, created-at, duration, workspace, user).
+[ ] Binaries are downloadable and real.
+[ ] Visibility/sharing model implemented + documented.
+[ ] Full end-to-end flow verified in the browser.
+[ ] >=2 test accounts work on the deployed URL.
+[ ] README complete (run/arch/decisions/security/limitations/time/attrib).
+[ ] Walkthrough recording or screenshots produced.
+[ ] All tests pass (paste output). Incremental commits throughout.
+[ ] Hand-off / final note written.
+========================================================================
