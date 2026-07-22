@@ -1,0 +1,13 @@
+# DAY - 1 : 22nd July 2026, wednesday
+
+- Recieved the project
+- Decided to document everyday progress as these text file blogs
+
+# Progress
+
+- Flask & React is my comfort zone, tech stack no problem
+- Asked claude to explain me the project
+- Honestly I have no Idea about ARM, Cross Compilers, A2L Files, ECU Programming
+- Failed attempt of understanding from youtube, no one explaining in simple language
+- I guess I need to ask claude to get started and then reverse-engineer my understanding
+- Let's initialize a git repo and get started

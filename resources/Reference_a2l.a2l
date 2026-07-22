@@ -1,0 +1,1156 @@
+/* a2ltool 3.2.0 */
+ASAP2_VERSION 1 71
+/begin PROJECT new_project "description of project"
+  /begin MODULE new_module ""
+
+    /begin COMPU_METHOD Memory_Mode "Conversion table for enum Memory_Mode"
+      TAB_VERB "%.4" ""
+      COMPU_TAB_REF Memory_Mode
+    /end COMPU_METHOD
+
+    /begin COMPU_METHOD RunningMode "Conversion table for enum RunningMode"
+      TAB_VERB "%.4" ""
+      COMPU_TAB_REF RunningMode
+    /end COMPU_METHOD
+
+    /begin COMPU_METHOD cy_en_accept_non_matching_frames_t "Conversion table for enum cy_en_accept_non_matching_frames_t"
+      TAB_VERB "%.4" ""
+      COMPU_TAB_REF cy_en_accept_non_matching_frames_t
+    /end COMPU_METHOD
+
+    /begin COMPU_METHOD cy_en_canfd_efec_t "Conversion table for enum cy_en_canfd_efec_t"
+      TAB_VERB "%.4" ""
+      COMPU_TAB_REF cy_en_canfd_efec_t
+    /end COMPU_METHOD
+
+    /begin COMPU_METHOD cy_en_canfd_eft_t "Conversion table for enum cy_en_canfd_eft_t"
+      TAB_VERB "%.4" ""
+      COMPU_TAB_REF cy_en_canfd_eft_t
+    /end COMPU_METHOD
+
+    /begin COMPU_METHOD gear_state_t "Conversion table for enum gear_state_t"
+      TAB_VERB "%.4" ""
+      COMPU_TAB_REF gear_state_t
+    /end COMPU_METHOD
+
+    /begin COMPU_METHOD uLogix_state_t "Conversion table for enum uLogix_state_t"
+      TAB_VERB "%.4" ""
+      COMPU_TAB_REF uLogix_state_t
+    /end COMPU_METHOD
+
+    /begin COMPU_VTAB Memory_Mode "Conversion table for enum Memory_Mode"
+      TAB_VERB 4
+      0 "MEMORY_MODE_UNKNOWN"
+      1 "MEMORY_MODE_POOL"
+      2 "MEMORY_MODE_ALLOCATOR"
+      3 "MEMORY_MODE_SYSTEM_ALLOCATOR"
+    /end COMPU_VTAB
+
+    /begin COMPU_VTAB RunningMode "Conversion table for enum RunningMode"
+      TAB_VERB 4
+      1 "Mode_Interp"
+      2 "Mode_Fast_JIT"
+      3 "Mode_LLVM_JIT"
+      4 "Mode_Multi_Tier_JIT"
+    /end COMPU_VTAB
+
+    /begin COMPU_VTAB cy_en_accept_non_matching_frames_t "Conversion table for enum cy_en_accept_non_matching_frames_t"
+      TAB_VERB 3
+      0 "CY_CANFD_ACCEPT_IN_RXFIFO_0"
+      1 "CY_CANFD_ACCEPT_IN_RXFIFO_1"
+      2 "CY_CANFD_REJECT_NON_MATCHING"
+    /end COMPU_VTAB
+
+    /begin COMPU_VTAB cy_en_canfd_efec_t "Conversion table for enum cy_en_canfd_efec_t"
+      TAB_VERB 8
+      0 "CY_CANFD_EFEC_DISABLE"
+      1 "CY_CANFD_EFEC_STORE_RX_FIFO_0"
+      2 "CY_CANFD_EFEC_STORE_RX_FIFO_1"
+      3 "CY_CANFD_EFEC_REJECT_ID"
+      4 "CY_CANFD_EFEC_SET_PRIORITY"
+      5 "CY_CANFD_EFEC_SET_PRIORITY_STORE_FIFO_0"
+      6 "CY_CANFD_EFEC_SET_PRIORITY_STORE_FIFO_1"
+      7 "CY_CANFD_EFEC_STORE_RX_BUFFER"
+    /end COMPU_VTAB
+
+    /begin COMPU_VTAB cy_en_canfd_eft_t "Conversion table for enum cy_en_canfd_eft_t"
+      TAB_VERB 4
+      0 "CY_CANFD_EFT_RANGE_EFID1_EFID2"
+      1 "CY_CANFD_EFT_DUAL_ID"
+      2 "CY_CANFD_EFT_CLASSIC_FILTER"
+      3 "CY_CANFD_EFT_RANGE_EFID1_EFID2_NO_MSK"
+    /end COMPU_VTAB
+
+    /begin COMPU_VTAB gear_state_t "Conversion table for enum gear_state_t"
+      TAB_VERB 3
+      0 "GEAR_NEUTRAL"
+      1 "GEAR_DRIVE"
+      2 "GEAR_REVERSE"
+    /end COMPU_VTAB
+
+    /begin COMPU_VTAB uLogix_state_t "Conversion table for enum uLogix_state_t"
+      TAB_VERB 7
+      0 "uLogix_STATE_IDLE"
+      1 "uLogix_STATE_OTA_RECEIVING"
+      2 "uLogix_STATE_VALIDATING"
+      3 "uLogix_STATE_LOADING"
+      4 "uLogix_STATE_RUNNING"
+      5 "uLogix_STATE_STOPPED"
+      6 "uLogix_STATE_ERROR"
+    /end COMPU_VTAB
+
+    /begin MEASUREMENT Acc_Pedal_Pos "measurement for symbol Acc_Pedal_Pos"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058C4
+      SYMBOL_LINK "Acc_Pedal_Pos" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT AppStatusListFrame620.app_uid "measurement for symbol AppStatusListFrame620.app_uid"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058DC
+      MATRIX_DIM 2
+      SYMBOL_LINK "AppStatusListFrame620.app_uid" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT AppStatusListFrame620.seq_id "measurement for symbol AppStatusListFrame620.seq_id"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058DE
+      SYMBOL_LINK "AppStatusListFrame620.seq_id" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT Brake_Pedal_Pos "measurement for symbol Brake_Pedal_Pos"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058C5
+      SYMBOL_LINK "Brake_Pedal_Pos" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ButtonIntrFlag "measurement for symbol ButtonIntrFlag"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058AC
+      SYMBOL_LINK "ButtonIntrFlag" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT CANFD_extIdFilterF0Config_0.efec "measurement for symbol CANFD_extIdFilterF0Config_0.efec"
+      UBYTE cy_en_canfd_efec_t 0 0 0 7
+      ECU_ADDRESS 0x2800586C
+      SYMBOL_LINK "CANFD_extIdFilterF0Config_0.efec" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT CANFD_extIdFilterF0Config_0.efid1 "measurement for symbol CANFD_extIdFilterF0Config_0.efid1"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x28005868
+      SYMBOL_LINK "CANFD_extIdFilterF0Config_0.efid1" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT CANFD_extIdFilterF1Config_0.efid2 "measurement for symbol CANFD_extIdFilterF1Config_0.efid2"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x28005860
+      SYMBOL_LINK "CANFD_extIdFilterF1Config_0.efid2" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT CANFD_extIdFilterF1Config_0.eft "measurement for symbol CANFD_extIdFilterF1Config_0.eft"
+      UBYTE cy_en_canfd_eft_t 0 0 0 3
+      ECU_ADDRESS 0x28005864
+      SYMBOL_LINK "CANFD_extIdFilterF1Config_0.eft" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT CANFD_globalFilterConfig.nonMatchingFramesExtended "measurement for symbol CANFD_globalFilterConfig.nonMatchingFramesExtended"
+      UBYTE cy_en_accept_non_matching_frames_t 0 0 0 2
+      ECU_ADDRESS 0x2800585D
+      SYMBOL_LINK "CANFD_globalFilterConfig.nonMatchingFramesExtended" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT CANFD_globalFilterConfig.nonMatchingFramesStandard "measurement for symbol CANFD_globalFilterConfig.nonMatchingFramesStandard"
+      UBYTE cy_en_accept_non_matching_frames_t 0 0 0 2
+      ECU_ADDRESS 0x2800585C
+      SYMBOL_LINK "CANFD_globalFilterConfig.nonMatchingFramesStandard" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT CANFD_globalFilterConfig.rejectRemoteFramesExtended "measurement for symbol CANFD_globalFilterConfig.rejectRemoteFramesExtended"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x2800585F
+      SYMBOL_LINK "CANFD_globalFilterConfig.rejectRemoteFramesExtended" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT CANFD_globalFilterConfig.rejectRemoteFramesStandard "measurement for symbol CANFD_globalFilterConfig.rejectRemoteFramesStandard"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x2800585E
+      SYMBOL_LINK "CANFD_globalFilterConfig.rejectRemoteFramesStandard" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT CANID_DynFrame "measurement for symbol CANID_DynFrame"
+      SLONG NO_COMPU_METHOD 0 0 -2147483648 2147483647
+      ECU_ADDRESS 0x280058D0
+      SYMBOL_LINK "CANID_DynFrame" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT DrvDoorOpenAngle_deg_value "measurement for symbol DrvDoorOpenAngle_deg_value"
+      SBYTE NO_COMPU_METHOD 0 0 -128 127
+      ECU_ADDRESS 0x280058C6
+      SYMBOL_LINK "DrvDoorOpenAngle_deg_value" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT IsAC_ON_value "measurement for symbol IsAC_ON_value"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058CB
+      SYMBOL_LINK "IsAC_ON_value" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT IsDriverSeatBelt_Buckled_value "measurement for symbol IsDriverSeatBelt_Buckled_value"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058CC
+      SYMBOL_LINK "IsDriverSeatBelt_Buckled_value" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ResourceFrame750.app_uid "measurement for symbol ResourceFrame750.app_uid"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058EC
+      MATRIX_DIM 4
+      SYMBOL_LINK "ResourceFrame750.app_uid" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ResourceFrame750.param_mask "measurement for symbol ResourceFrame750.param_mask"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058F0
+      SYMBOL_LINK "ResourceFrame750.param_mask" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ResourceFrame750.raster_byte "measurement for symbol ResourceFrame750.raster_byte"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058F2
+      SYMBOL_LINK "ResourceFrame750.raster_byte" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ResourceFrame750.req_type "measurement for symbol ResourceFrame750.req_type"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058F1
+      SYMBOL_LINK "ResourceFrame750.req_type" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ResourceFrame750.seq_id "measurement for symbol ResourceFrame750.seq_id"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058F3
+      SYMBOL_LINK "ResourceFrame750.seq_id" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT StartStopRemoveFrame610.action_code "measurement for symbol StartStopRemoveFrame610.action_code"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058E4
+      SYMBOL_LINK "StartStopRemoveFrame610.action_code" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT StartStopRemoveFrame610.app_uid "measurement for symbol StartStopRemoveFrame610.app_uid"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058E0
+      MATRIX_DIM 4
+      SYMBOL_LINK "StartStopRemoveFrame610.app_uid" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT StartStopRemoveFrame610.flags "measurement for symbol StartStopRemoveFrame610.flags"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058E5
+      SYMBOL_LINK "StartStopRemoveFrame610.flags" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT StartStopRemoveFrame610.reserved "measurement for symbol StartStopRemoveFrame610.reserved"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058E6
+      SYMBOL_LINK "StartStopRemoveFrame610.reserved" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT StartStopRemoveFrame610.seq_id "measurement for symbol StartStopRemoveFrame610.seq_id"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058E7
+      SYMBOL_LINK "StartStopRemoveFrame610.seq_id" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT Start_Stop_Button "measurement for symbol Start_Stop_Button"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058CA
+      SYMBOL_LINK "Start_Stop_Button" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT _exception_lock.is_recursive "measurement for symbol _exception_lock.is_recursive"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x28005954
+      SYMBOL_LINK "_exception_lock.is_recursive" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT argv_mon "measurement for symbol argv_mon"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D3B14
+      MATRIX_DIM 1
+      SYMBOL_LINK "argv_mon" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT argv_scalar_calib "measurement for symbol argv_scalar_calib"
+      SLONG NO_COMPU_METHOD 0 0 -2147483648 2147483647
+      ECU_ADDRESS 0x280D3B10
+      MATRIX_DIM 1
+      SYMBOL_LINK "argv_scalar_calib" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT brake_is_pressed "measurement for symbol brake_is_pressed"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x28005890
+      SYMBOL_LINK "brake_is_pressed" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT byte0_dynFrame "measurement for symbol byte0_dynFrame"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058DB
+      SYMBOL_LINK "byte0_dynFrame" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT byte1_dynFrame "measurement for symbol byte1_dynFrame"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058DA
+      SYMBOL_LINK "byte1_dynFrame" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT byte2_dynFrame "measurement for symbol byte2_dynFrame"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058D9
+      SYMBOL_LINK "byte2_dynFrame" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT byte3_dynFrame "measurement for symbol byte3_dynFrame"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058D8
+      SYMBOL_LINK "byte3_dynFrame" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT byte4_dynFrame "measurement for symbol byte4_dynFrame"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058D7
+      SYMBOL_LINK "byte4_dynFrame" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT byte5_dynFrame "measurement for symbol byte5_dynFrame"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058D6
+      SYMBOL_LINK "byte5_dynFrame" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT byte6_dynFrame "measurement for symbol byte6_dynFrame"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058D5
+      SYMBOL_LINK "byte6_dynFrame" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT byte7_dynFrame "measurement for symbol byte7_dynFrame"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058D4
+      SYMBOL_LINK "byte7_dynFrame" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT canfd_context.messageRAMaddress "measurement for symbol canfd_context.messageRAMaddress"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280058A0
+      SYMBOL_LINK "canfd_context.messageRAMaddress" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT canfd_context.messageRAMsize "measurement for symbol canfd_context.messageRAMsize"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280058A4
+      SYMBOL_LINK "canfd_context.messageRAMsize" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT cluster_list_head.len "measurement for symbol cluster_list_head.len"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x28005964
+      SYMBOL_LINK "cluster_list_head.len" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT cluster_list_lock.is_recursive "measurement for symbol cluster_list_lock.is_recursive"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x2800595C
+      SYMBOL_LINK "cluster_list_lock.is_recursive" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT counter_can_rx_ResourceFrame750 "measurement for symbol counter_can_rx_ResourceFrame750"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058E8
+      SYMBOL_LINK "counter_can_rx_ResourceFrame750" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].active.length "measurement for symbol ctx[0].active.length"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D0A3C
+      SYMBOL_LINK "ctx[0].active.length" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].active_storage "measurement for symbol ctx[0].active_storage"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280CEA38
+      MATRIX_DIM 4096
+      SYMBOL_LINK "ctx[0].active_storage" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].app_id "measurement for symbol ctx[0].app_id"
+      UWORD NO_COMPU_METHOD 0 0 0 65535
+      ECU_ADDRESS 0x280D0A58
+      SYMBOL_LINK "ctx[0].app_id" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].backup.length "measurement for symbol ctx[0].backup.length"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D0A44
+      SYMBOL_LINK "ctx[0].backup.length" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].backup_storage "measurement for symbol ctx[0].backup_storage"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280CFA38
+      MATRIX_DIM 4096
+      SYMBOL_LINK "ctx[0].backup_storage" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].exec_env_ram_usage "measurement for symbol ctx[0].exec_env_ram_usage"
+      UWORD NO_COMPU_METHOD 0 0 0 65535
+      ECU_ADDRESS 0x280D0A54
+      SYMBOL_LINK "ctx[0].exec_env_ram_usage" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].expected_size "measurement for symbol ctx[0].expected_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CE9C4
+      SYMBOL_LINK "ctx[0].expected_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].frame_complete "measurement for symbol ctx[0].frame_complete"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280CE9CA
+      SYMBOL_LINK "ctx[0].frame_complete" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].frame_count "measurement for symbol ctx[0].frame_count"
+      UWORD NO_COMPU_METHOD 0 0 0 65535
+      ECU_ADDRESS 0x280CE9C8
+      SYMBOL_LINK "ctx[0].frame_count" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].input_uLogix_ptr "measurement for symbol ctx[0].input_uLogix_ptr"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D0A5C
+      SYMBOL_LINK "ctx[0].input_uLogix_ptr" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].is_corrupted "measurement for symbol ctx[0].is_corrupted"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D0A4B
+      SYMBOL_LINK "ctx[0].is_corrupted" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].is_executed "measurement for symbol ctx[0].is_executed"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D0A4A
+      SYMBOL_LINK "ctx[0].is_executed" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].is_loaded "measurement for symbol ctx[0].is_loaded"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D0A49
+      SYMBOL_LINK "ctx[0].is_loaded" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].last_ota_rx_tick "measurement for symbol ctx[0].last_ota_rx_tick"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D0A50
+      SYMBOL_LINK "ctx[0].last_ota_rx_tick" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_inst_mem_consps.app_heap_size "measurement for symbol ctx[0].module_inst_mem_consps.app_heap_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CEA1C
+      SYMBOL_LINK "ctx[0].module_inst_mem_consps.app_heap_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_inst_mem_consps.exports_size "measurement for symbol ctx[0].module_inst_mem_consps.exports_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CEA34
+      SYMBOL_LINK "ctx[0].module_inst_mem_consps.exports_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_inst_mem_consps.functions_size "measurement for symbol ctx[0].module_inst_mem_consps.functions_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CEA30
+      SYMBOL_LINK "ctx[0].module_inst_mem_consps.functions_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_inst_mem_consps.globals_size "measurement for symbol ctx[0].module_inst_mem_consps.globals_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CEA2C
+      SYMBOL_LINK "ctx[0].module_inst_mem_consps.globals_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_inst_mem_consps.memories_size "measurement for symbol ctx[0].module_inst_mem_consps.memories_size"
+      A_UINT64 NO_COMPU_METHOD 0 0 0 1.8446744073709552e19
+      ECU_ADDRESS 0x280CEA20
+      SYMBOL_LINK "ctx[0].module_inst_mem_consps.memories_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_inst_mem_consps.module_inst_struct_size "measurement for symbol ctx[0].module_inst_mem_consps.module_inst_struct_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CEA18
+      SYMBOL_LINK "ctx[0].module_inst_mem_consps.module_inst_struct_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_inst_mem_consps.tables_size "measurement for symbol ctx[0].module_inst_mem_consps.tables_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CEA28
+      SYMBOL_LINK "ctx[0].module_inst_mem_consps.tables_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_inst_mem_consps.total_size "measurement for symbol ctx[0].module_inst_mem_consps.total_size"
+      A_UINT64 NO_COMPU_METHOD 0 0 0 1.8446744073709552e19
+      ECU_ADDRESS 0x280CEA10
+      SYMBOL_LINK "ctx[0].module_inst_mem_consps.total_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_mem_consps.const_strs_size "measurement for symbol ctx[0].module_mem_consps.const_strs_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CEA08
+      SYMBOL_LINK "ctx[0].module_mem_consps.const_strs_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_mem_consps.data_segs_size "measurement for symbol ctx[0].module_mem_consps.data_segs_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CEA04
+      SYMBOL_LINK "ctx[0].module_mem_consps.data_segs_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_mem_consps.exports_size "measurement for symbol ctx[0].module_mem_consps.exports_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CE9FC
+      SYMBOL_LINK "ctx[0].module_mem_consps.exports_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_mem_consps.functions_size "measurement for symbol ctx[0].module_mem_consps.functions_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CE9EC
+      SYMBOL_LINK "ctx[0].module_mem_consps.functions_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_mem_consps.globals_size "measurement for symbol ctx[0].module_mem_consps.globals_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CE9F8
+      SYMBOL_LINK "ctx[0].module_mem_consps.globals_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_mem_consps.imports_size "measurement for symbol ctx[0].module_mem_consps.imports_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CE9E8
+      SYMBOL_LINK "ctx[0].module_mem_consps.imports_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_mem_consps.memories_size "measurement for symbol ctx[0].module_mem_consps.memories_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CE9F4
+      SYMBOL_LINK "ctx[0].module_mem_consps.memories_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_mem_consps.module_struct_size "measurement for symbol ctx[0].module_mem_consps.module_struct_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CE9E0
+      SYMBOL_LINK "ctx[0].module_mem_consps.module_struct_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_mem_consps.table_segs_size "measurement for symbol ctx[0].module_mem_consps.table_segs_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CEA00
+      SYMBOL_LINK "ctx[0].module_mem_consps.table_segs_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_mem_consps.tables_size "measurement for symbol ctx[0].module_mem_consps.tables_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CE9F0
+      SYMBOL_LINK "ctx[0].module_mem_consps.tables_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_mem_consps.total_size "measurement for symbol ctx[0].module_mem_consps.total_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CE9DC
+      SYMBOL_LINK "ctx[0].module_mem_consps.total_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].module_mem_consps.types_size "measurement for symbol ctx[0].module_mem_consps.types_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CE9E4
+      SYMBOL_LINK "ctx[0].module_mem_consps.types_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].ota_buffer "measurement for symbol ctx[0].ota_buffer"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280CD9C0
+      MATRIX_DIM 4096
+      SYMBOL_LINK "ctx[0].ota_buffer" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].ota_index "measurement for symbol ctx[0].ota_index"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CE9C0
+      SYMBOL_LINK "ctx[0].ota_index" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].ota_module_type "measurement for symbol ctx[0].ota_module_type"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280CE9CB
+      SYMBOL_LINK "ctx[0].ota_module_type" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].remove_req "measurement for symbol ctx[0].remove_req"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D0A4E
+      SYMBOL_LINK "ctx[0].remove_req" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].reset_req "measurement for symbol ctx[0].reset_req"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D0A4F
+      SYMBOL_LINK "ctx[0].reset_req" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].start_req "measurement for symbol ctx[0].start_req"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D0A4C
+      SYMBOL_LINK "ctx[0].start_req" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].state "measurement for symbol ctx[0].state"
+      UBYTE uLogix_state_t 0 0 0 6
+      ECU_ADDRESS 0x280D0A48
+      SYMBOL_LINK "ctx[0].state" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].stop_req "measurement for symbol ctx[0].stop_req"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D0A4D
+      SYMBOL_LINK "ctx[0].stop_req" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[0].target_ecu_id "measurement for symbol ctx[0].target_ecu_id"
+      UWORD NO_COMPU_METHOD 0 0 0 65535
+      ECU_ADDRESS 0x280D0A56
+      SYMBOL_LINK "ctx[0].target_ecu_id" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].active.length "measurement for symbol ctx[1].active.length"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D3AE4
+      SYMBOL_LINK "ctx[1].active.length" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].active_storage "measurement for symbol ctx[1].active_storage"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D1AE0
+      MATRIX_DIM 4096
+      SYMBOL_LINK "ctx[1].active_storage" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].app_id "measurement for symbol ctx[1].app_id"
+      UWORD NO_COMPU_METHOD 0 0 0 65535
+      ECU_ADDRESS 0x280D3B00
+      SYMBOL_LINK "ctx[1].app_id" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].backup.length "measurement for symbol ctx[1].backup.length"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D3AEC
+      SYMBOL_LINK "ctx[1].backup.length" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].backup_storage "measurement for symbol ctx[1].backup_storage"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D2AE0
+      MATRIX_DIM 4096
+      SYMBOL_LINK "ctx[1].backup_storage" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].exec_env_ram_usage "measurement for symbol ctx[1].exec_env_ram_usage"
+      UWORD NO_COMPU_METHOD 0 0 0 65535
+      ECU_ADDRESS 0x280D3AFC
+      SYMBOL_LINK "ctx[1].exec_env_ram_usage" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].expected_size "measurement for symbol ctx[1].expected_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1A6C
+      SYMBOL_LINK "ctx[1].expected_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].frame_complete "measurement for symbol ctx[1].frame_complete"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D1A72
+      SYMBOL_LINK "ctx[1].frame_complete" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].frame_count "measurement for symbol ctx[1].frame_count"
+      UWORD NO_COMPU_METHOD 0 0 0 65535
+      ECU_ADDRESS 0x280D1A70
+      SYMBOL_LINK "ctx[1].frame_count" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].input_uLogix_ptr "measurement for symbol ctx[1].input_uLogix_ptr"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D3B04
+      SYMBOL_LINK "ctx[1].input_uLogix_ptr" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].is_corrupted "measurement for symbol ctx[1].is_corrupted"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D3AF3
+      SYMBOL_LINK "ctx[1].is_corrupted" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].is_executed "measurement for symbol ctx[1].is_executed"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D3AF2
+      SYMBOL_LINK "ctx[1].is_executed" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].is_loaded "measurement for symbol ctx[1].is_loaded"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D3AF1
+      SYMBOL_LINK "ctx[1].is_loaded" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].last_ota_rx_tick "measurement for symbol ctx[1].last_ota_rx_tick"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D3AF8
+      SYMBOL_LINK "ctx[1].last_ota_rx_tick" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_inst_mem_consps.app_heap_size "measurement for symbol ctx[1].module_inst_mem_consps.app_heap_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1AC4
+      SYMBOL_LINK "ctx[1].module_inst_mem_consps.app_heap_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_inst_mem_consps.exports_size "measurement for symbol ctx[1].module_inst_mem_consps.exports_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1ADC
+      SYMBOL_LINK "ctx[1].module_inst_mem_consps.exports_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_inst_mem_consps.functions_size "measurement for symbol ctx[1].module_inst_mem_consps.functions_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1AD8
+      SYMBOL_LINK "ctx[1].module_inst_mem_consps.functions_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_inst_mem_consps.globals_size "measurement for symbol ctx[1].module_inst_mem_consps.globals_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1AD4
+      SYMBOL_LINK "ctx[1].module_inst_mem_consps.globals_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_inst_mem_consps.memories_size "measurement for symbol ctx[1].module_inst_mem_consps.memories_size"
+      A_UINT64 NO_COMPU_METHOD 0 0 0 1.8446744073709552e19
+      ECU_ADDRESS 0x280D1AC8
+      SYMBOL_LINK "ctx[1].module_inst_mem_consps.memories_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_inst_mem_consps.module_inst_struct_size "measurement for symbol ctx[1].module_inst_mem_consps.module_inst_struct_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1AC0
+      SYMBOL_LINK "ctx[1].module_inst_mem_consps.module_inst_struct_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_inst_mem_consps.tables_size "measurement for symbol ctx[1].module_inst_mem_consps.tables_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1AD0
+      SYMBOL_LINK "ctx[1].module_inst_mem_consps.tables_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_inst_mem_consps.total_size "measurement for symbol ctx[1].module_inst_mem_consps.total_size"
+      A_UINT64 NO_COMPU_METHOD 0 0 0 1.8446744073709552e19
+      ECU_ADDRESS 0x280D1AB8
+      SYMBOL_LINK "ctx[1].module_inst_mem_consps.total_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_mem_consps.const_strs_size "measurement for symbol ctx[1].module_mem_consps.const_strs_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1AB0
+      SYMBOL_LINK "ctx[1].module_mem_consps.const_strs_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_mem_consps.data_segs_size "measurement for symbol ctx[1].module_mem_consps.data_segs_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1AAC
+      SYMBOL_LINK "ctx[1].module_mem_consps.data_segs_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_mem_consps.exports_size "measurement for symbol ctx[1].module_mem_consps.exports_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1AA4
+      SYMBOL_LINK "ctx[1].module_mem_consps.exports_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_mem_consps.functions_size "measurement for symbol ctx[1].module_mem_consps.functions_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1A94
+      SYMBOL_LINK "ctx[1].module_mem_consps.functions_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_mem_consps.globals_size "measurement for symbol ctx[1].module_mem_consps.globals_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1AA0
+      SYMBOL_LINK "ctx[1].module_mem_consps.globals_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_mem_consps.imports_size "measurement for symbol ctx[1].module_mem_consps.imports_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1A90
+      SYMBOL_LINK "ctx[1].module_mem_consps.imports_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_mem_consps.memories_size "measurement for symbol ctx[1].module_mem_consps.memories_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1A9C
+      SYMBOL_LINK "ctx[1].module_mem_consps.memories_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_mem_consps.module_struct_size "measurement for symbol ctx[1].module_mem_consps.module_struct_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1A88
+      SYMBOL_LINK "ctx[1].module_mem_consps.module_struct_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_mem_consps.table_segs_size "measurement for symbol ctx[1].module_mem_consps.table_segs_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1AA8
+      SYMBOL_LINK "ctx[1].module_mem_consps.table_segs_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_mem_consps.tables_size "measurement for symbol ctx[1].module_mem_consps.tables_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1A98
+      SYMBOL_LINK "ctx[1].module_mem_consps.tables_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_mem_consps.total_size "measurement for symbol ctx[1].module_mem_consps.total_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1A84
+      SYMBOL_LINK "ctx[1].module_mem_consps.total_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].module_mem_consps.types_size "measurement for symbol ctx[1].module_mem_consps.types_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1A8C
+      SYMBOL_LINK "ctx[1].module_mem_consps.types_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].ota_buffer "measurement for symbol ctx[1].ota_buffer"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D0A68
+      MATRIX_DIM 4096
+      SYMBOL_LINK "ctx[1].ota_buffer" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].ota_index "measurement for symbol ctx[1].ota_index"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D1A68
+      SYMBOL_LINK "ctx[1].ota_index" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].ota_module_type "measurement for symbol ctx[1].ota_module_type"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D1A73
+      SYMBOL_LINK "ctx[1].ota_module_type" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].remove_req "measurement for symbol ctx[1].remove_req"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D3AF6
+      SYMBOL_LINK "ctx[1].remove_req" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].reset_req "measurement for symbol ctx[1].reset_req"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D3AF7
+      SYMBOL_LINK "ctx[1].reset_req" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].start_req "measurement for symbol ctx[1].start_req"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D3AF4
+      SYMBOL_LINK "ctx[1].start_req" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].state "measurement for symbol ctx[1].state"
+      UBYTE uLogix_state_t 0 0 0 6
+      ECU_ADDRESS 0x280D3AF0
+      SYMBOL_LINK "ctx[1].state" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].stop_req "measurement for symbol ctx[1].stop_req"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D3AF5
+      SYMBOL_LINK "ctx[1].stop_req" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ctx[1].target_ecu_id "measurement for symbol ctx[1].target_ecu_id"
+      UWORD NO_COMPU_METHOD 0 0 0 65535
+      ECU_ADDRESS 0x280D3AFE
+      SYMBOL_LINK "ctx[1].target_ecu_id" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT current_gear "measurement for symbol current_gear"
+      UBYTE gear_state_t 0 0 0 2
+      ECU_ADDRESS 0x280058C0
+      SYMBOL_LINK "current_gear" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT current_uLogix_idx "measurement for symbol current_uLogix_idx"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280CD9B4
+      SYMBOL_LINK "current_uLogix_idx" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT destroy_callback_list_head.len "measurement for symbol destroy_callback_list_head.len"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x2800596C
+      SYMBOL_LINK "destroy_callback_list_head.len" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT frame_count "measurement for symbol frame_count"
+      UWORD NO_COMPU_METHOD 0 0 0 65535
+      ECU_ADDRESS 0x280058B0
+      SYMBOL_LINK "frame_count" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT g_Driver_Window_Pos "measurement for symbol g_Driver_Window_Pos"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D3B20
+      SYMBOL_LINK "g_Driver_Window_Pos" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT g_Pass_Window_Pos "measurement for symbol g_Pass_Window_Pos"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D3B24
+      SYMBOL_LINK "g_Pass_Window_Pos" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT g_batteryhealthstatus "measurement for symbol g_batteryhealthstatus"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D3B18
+      SYMBOL_LINK "g_batteryhealthstatus" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT g_parkbrake_motor "measurement for symbol g_parkbrake_motor"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280D3B1C
+      SYMBOL_LINK "g_parkbrake_motor" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT g_vcu1_hscan1_20_signals.epb_req "measurement for symbol g_vcu1_hscan1_20_signals.epb_req"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058B9
+      SYMBOL_LINK "g_vcu1_hscan1_20_signals.epb_req" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT g_vcu1_hscan1_20_signals.gear_actual "measurement for symbol g_vcu1_hscan1_20_signals.gear_actual"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058B8
+      SYMBOL_LINK "g_vcu1_hscan1_20_signals.gear_actual" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT g_vcu1_hscan1_20_signals.raw_acc_pedal_value "measurement for symbol g_vcu1_hscan1_20_signals.raw_acc_pedal_value"
+      FLOAT32_IEEE NO_COMPU_METHOD 0 0 -3.4028234663852886e38 3.4028234663852886e38
+      ECU_ADDRESS 0x280058B4
+      SYMBOL_LINK "g_vcu1_hscan1_20_signals.raw_acc_pedal_value" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT global_heap_buf "measurement for symbol global_heap_buf"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280059A0
+      MATRIX_DIM 65535
+      SYMBOL_LINK "global_heap_buf" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT global_pool_size "measurement for symbol global_pool_size"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280058F4
+      SYMBOL_LINK "global_pool_size" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT input.cell_temp_c "measurement for symbol input.cell_temp_c"
+      SWORD NO_COMPU_METHOD 0 0 -32768 32767
+      ECU_ADDRESS 0x280CD9A8
+      MATRIX_DIM 4
+      SYMBOL_LINK "input.cell_temp_c" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT input.cell_voltage_mv "measurement for symbol input.cell_voltage_mv"
+      UWORD NO_COMPU_METHOD 0 0 0 65535
+      ECU_ADDRESS 0x280CD9A0
+      MATRIX_DIM 4
+      SYMBOL_LINK "input.cell_voltage_mv" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT input.pack_current_ma "measurement for symbol input.pack_current_ma"
+      UWORD NO_COMPU_METHOD 0 0 0 65535
+      ECU_ADDRESS 0x280CD9B0
+      SYMBOL_LINK "input.pack_current_ma" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT input.soc_percent "measurement for symbol input.soc_percent"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280CD9B2
+      SYMBOL_LINK "input.soc_percent" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT is_thread_sys_inited "measurement for symbol is_thread_sys_inited"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x2800599C
+      SYMBOL_LINK "is_thread_sys_inited" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT last_exec_tick "measurement for symbol last_exec_tick"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280CD9B8
+      MATRIX_DIM 2
+      SYMBOL_LINK "last_exec_tick" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT last_rx_tick "measurement for symbol last_rx_tick"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x280058BC
+      SYMBOL_LINK "last_rx_tick" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT left_headlight "measurement for symbol left_headlight"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D3B28
+      SYMBOL_LINK "left_headlight" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT left_taillight "measurement for symbol left_taillight"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D3B2A
+      SYMBOL_LINK "left_taillight" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT loading_module_list_head.len "measurement for symbol loading_module_list_head.len"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x28005944
+      SYMBOL_LINK "loading_module_list_head.len" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT loading_module_list_lock.is_recursive "measurement for symbol loading_module_list_lock.is_recursive"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x2800593C
+      SYMBOL_LINK "loading_module_list_lock.is_recursive" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT main_counter "measurement for symbol main_counter"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x2800588C
+      SYMBOL_LINK "main_counter" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT memory_mode "measurement for symbol memory_mode"
+      UBYTE Memory_Mode 0 0 0 3
+      ECU_ADDRESS 0x28005910
+      SYMBOL_LINK "memory_mode" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT middle_left_headlight "measurement for symbol middle_left_headlight"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D3B2B
+      SYMBOL_LINK "middle_left_headlight" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT middle_left_taillight "measurement for symbol middle_left_taillight"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D3B2C
+      SYMBOL_LINK "middle_left_taillight" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT middle_right_headlight "measurement for symbol middle_right_headlight"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D3B2D
+      SYMBOL_LINK "middle_right_headlight" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT middle_right_taillight "measurement for symbol middle_right_taillight"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D3B2E
+      SYMBOL_LINK "middle_right_taillight" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ota_valid_session "measurement for symbol ota_valid_session"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058AD
+      SYMBOL_LINK "ota_valid_session" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT pending_module_type "measurement for symbol pending_module_type"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280058AE
+      SYMBOL_LINK "pending_module_type" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT registered_module_list_head.len "measurement for symbol registered_module_list_head.len"
+      ULONG NO_COMPU_METHOD 0 0 0 4294967295
+      ECU_ADDRESS 0x28005934
+      SYMBOL_LINK "registered_module_list_head.len" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT registered_module_list_lock.is_recursive "measurement for symbol registered_module_list_lock.is_recursive"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x2800592C
+      SYMBOL_LINK "registered_module_list_lock.is_recursive" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT right_headlight "measurement for symbol right_headlight"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D3B2F
+      SYMBOL_LINK "right_headlight" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT right_taillight "measurement for symbol right_taillight"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280D3B29
+      SYMBOL_LINK "right_taillight" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT runtime_init_flag "measurement for symbol runtime_init_flag"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x280CD9B3
+      SYMBOL_LINK "runtime_init_flag" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT runtime_ref_count "measurement for symbol runtime_ref_count"
+      SLONG NO_COMPU_METHOD 0 0 -2147483648 2147483647
+      ECU_ADDRESS 0x28005920
+      SYMBOL_LINK "runtime_ref_count" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT runtime_running_mode "measurement for symbol runtime_running_mode"
+      UBYTE RunningMode 0 0 1 4
+      ECU_ADDRESS 0x28005924
+      SYMBOL_LINK "runtime_running_mode" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT steering_wheel_angle "measurement for symbol steering_wheel_angle"
+      SWORD NO_COMPU_METHOD 0 0 -32768 32767
+      ECU_ADDRESS 0x280058C2
+      SYMBOL_LINK "steering_wheel_angle" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT tx_buf_app "measurement for symbol tx_buf_app"
+      UBYTE NO_COMPU_METHOD 0 0 0 255
+      ECU_ADDRESS 0x2800587C
+      MATRIX_DIM 2 8
+      SYMBOL_LINK "tx_buf_app" 0
+    /end MEASUREMENT
+
+    /begin MEASUREMENT wheel_speed_sensor "measurement for symbol wheel_speed_sensor"
+      UWORD NO_COMPU_METHOD 0 0 0 65535
+      ECU_ADDRESS 0x280058C8
+      SYMBOL_LINK "wheel_speed_sensor" 0
+    /end MEASUREMENT
+  /end MODULE
+/end PROJECT
