@@ -251,3 +251,101 @@ will ask us to defend these.
   forced short timeout plus a real macro-expansion compile-time DoS attempt
   that the memory cap caught first — see `docs/SECURITY.md` for the full
   writeup.
+
+## Phase 5
+
+- **Marketplace visibility model: every artifact is browsable AND
+  downloadable by any logged-in user, not owner-restricted.** The phase
+  brief explicitly leaves this to the implementer ("interpret the
+  visibility/sharing model as you see fit — just tell us what you decided")
+  and offers three shapes: all-public, owner-only, or public-browse/
+  owner-download. Chose all-public-to-logged-in-users because it is the
+  literal reading of "successful builds land in a **shared, browsable
+  catalogue**" in the phase goal — a catalogue only its owner can see isn't
+  shared. Rejected:
+  - *Owner-only* — defeats the stated goal of a shared catalogue; would
+    just be a per-workspace build history view, which `GET
+    /api/workspaces/<id>/builds` (Phase 4) already provides.
+  - *Public browse, owner-only download* — adds a second authorization
+    check (compare `Artifact.build.user_id` against the session) purely to
+    prevent something the brief doesn't ask to be prevented; out of scope
+    per ground rule 7 ("no payment/licensing/rating" implies no access-
+    control feature work beyond what's asked either). Still gated behind
+    `login_required` — an anonymous, unauthenticated caller sees nothing.
+  Enforced in exactly one place: `marketplace.py` has no ownership check at
+  all (contrast `workspaces.py::_get_owned_workspace`), by design.
+
+- **`Artifact` is a thin table that joins through `Build`, not a
+  duplicate of Build's data.** The phase 4 hand-off explicitly flagged this:
+  `Build` already carries `log_text`, `created_at`, `duration_ms`,
+  `workspace_id`, `user_id`. `Artifact` only adds what's specific to the
+  binary itself — `filename`, `size_bytes`, `download_ref` — plus its own
+  `created_at` (when the artifact row was written, immediately after the
+  build's own timestamp) and a `build_id` FK. `Artifact.to_dict()` reads
+  through `self.build`/`self.build.workspace`/`self.build.user` to assemble
+  the full required-metadata shape (binary, full log, created-at, duration,
+  workspace, user) in one response, so the API consumer never has to
+  cross-reference two endpoints.
+
+- **One `Artifact` per successful `Build`, created inline in
+  `builds.py::_run_build_job` right after `bin_artifact_ref` is written**,
+  not as a separate "publish to marketplace" action or a background job.
+  There is no unpublished/draft state — every successful build is
+  immediately in the catalogue, consistent with the all-public visibility
+  model above. A failed/errored build never gets an `Artifact` row (no
+  `bin_bytes` to point at), verified by
+  `test_marketplace_api.py::test_failed_build_does_not_create_an_artifact`.
+
+- **Artifact filename is generated (`workspace_<id>_build_<id>.bin`), not
+  user-supplied.** Nothing in this project lets a user name their compiled
+  output, and accepting one would mean sanitising it for the
+  `Content-Disposition` header (path traversal / header-injection surface)
+  for zero functional benefit — the generated name is already unique and
+  traceable back to its workspace/build.
+
+- **Download serves `bin_artifact_ref` (the raw `objcopy` binary), not
+  `artifact_ref` (the debug ELF).** Per the phase 4 hand-off note: the ELF
+  is a secondary/debug artifact; `.bin` is "the downloadable binary" the
+  brief's required metadata actually asks for. The ELF is still on `Build`
+  and could be exposed later if a "download debug symbols" feature is ever
+  wanted, but that's not asked for here.
+
+- **`LocalStorage` gained a `read_bytes` method; no R2/S3 implementation
+  was written.** Consistent with every earlier phase's storage decision
+  (Phase 1/2): the interface (`write_bytes`/`read_text`/`read_bytes`/
+  `delete`) is the contract callers depend on, and only the local-disk
+  implementation is built here — an R2-backed class can be dropped in later
+  without touching `marketplace.py` or `builds.py`. Per ground rules and
+  `_plan/06_devops_instructions.txt`, picking/deploying the actual cloud
+  backend is Tanishq's DevOps call, not something to pre-build speculatively.
+
+- **Download endpoint reads the whole file into memory and returns it in
+  one `Response`, not `send_file`/streamed chunks.** The same 2 MB
+  `MAX_ARTIFACT_BYTES` cap `compiler.py` already enforces at build time
+  (see Phase 4) upper-bounds every artifact this endpoint will ever serve,
+  so there is no large-file streaming concern to design around at this
+  scale. `flask.send_file` was considered and rejected only because it
+  wants a filesystem path or file-like object tied to the storage
+  implementation's own layout; a plain `Response(data, ...)` keeps the
+  route storage-implementation-agnostic (it only ever calls
+  `storage.read_bytes`), matching the same interface-not-implementation
+  principle as the rest of `storage.py`.
+
+- **Seed script (`backend/seed.py`), not a Flask CLI command.** A standalone
+  script run once (`python seed.py`) was simpler to write and explain than
+  a custom `flask seed` CLI command for a one-shot, rarely-repeated task.
+  It is idempotent (skips accounts that already exist) so it's safe to
+  re-run, and credentials come from `SEED_USER{1,2}_EMAIL`/`_PASSWORD` env
+  vars if set, otherwise a random password is generated and printed once —
+  nothing is hardcoded so nothing sensitive is ever committed. Per ground
+  rule 10, the actual generated/chosen passwords for the deployed
+  submission live only in the private submission note, never in the repo.
+
+- **Marketplace UI is a plain HTML `<table>` + a detail page, no table/UI
+  library.** Matches the rest of the frontend (`WorkspaceList.jsx`,
+  `Workspace.jsx` use plain lists/CSS classes, no component library) and
+  the ground rules' explicit "polished visual design is out of scope"
+  ruling. Reachable via a "Marketplace" link added to the workspace list
+  header and the landing page — the two places a logged-in user already
+  lands, so no new persistent nav bar component was introduced just for
+  one more link.

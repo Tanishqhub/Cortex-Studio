@@ -5,6 +5,8 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import WorkspaceList from "./pages/WorkspaceList";
 import Workspace from "./pages/Workspace";
+import Marketplace from "./pages/Marketplace";
+import ArtifactDetail from "./pages/ArtifactDetail";
 import "./App.css";
 
 function Landing({ user, onLoggedOut }) {
@@ -21,6 +23,9 @@ function Landing({ user, onLoggedOut }) {
       <h1>Logged in as {user.email}</h1>
       <p>
         <Link to="/workspaces">Go to workspaces</Link>
+      </p>
+      <p>
+        <Link to="/marketplace">Browse marketplace</Link>
       </p>
       <button onClick={handleLogout}>Logout</button>
     </div>
@@ -68,6 +73,22 @@ export default function App() {
         element={
           <RequireAuth user={user} loading={loading}>
             {user && <Workspace />}
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/marketplace"
+        element={
+          <RequireAuth user={user} loading={loading}>
+            {user && <Marketplace user={user} />}
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/marketplace/:id"
+        element={
+          <RequireAuth user={user} loading={loading}>
+            {user && <ArtifactDetail />}
           </RequireAuth>
         }
       />

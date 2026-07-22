@@ -27,6 +27,10 @@ class LocalStorage:
         with open(self._full_path(relative_path), "r", encoding=encoding, errors="replace") as f:
             return f.read()
 
+    def read_bytes(self, relative_path):
+        with open(self._full_path(relative_path), "rb") as f:
+            return f.read()
+
     def delete(self, relative_path):
         full_path = self._full_path(relative_path)
         if os.path.isfile(full_path):

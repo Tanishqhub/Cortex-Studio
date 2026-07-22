@@ -90,3 +90,15 @@ export function triggerBuild(workspaceId) {
 export function getBuild(buildId) {
   return request(`/builds/${buildId}`);
 }
+
+export function listMarketplace() {
+  return request("/marketplace");
+}
+
+export function getArtifact(id) {
+  return request(`/artifacts/${id}`);
+}
+
+export function artifactDownloadUrl(id) {
+  return `${BASE}/artifacts/${id}/download`;
+}

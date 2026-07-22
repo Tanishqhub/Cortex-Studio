@@ -42,6 +42,7 @@ export default function WorkspaceList({ user, onLoggedOut }) {
       <header className="workspace-list-header">
         <h1>Workspaces</h1>
         <div>
+          <Link to="/marketplace">Marketplace</Link>
           <span>{user.email}</span>
           <button onClick={handleLogout}>Logout</button>
         </div>

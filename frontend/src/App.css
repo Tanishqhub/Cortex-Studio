@@ -221,3 +221,75 @@
   background: #1e1e1e;
   color: #d4d4d4;
 }
+
+.marketplace-page,
+.artifact-detail-page {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  font-family: system-ui, sans-serif;
+  text-align: left;
+}
+
+.marketplace-header,
+.artifact-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.marketplace-header h1,
+.artifact-detail-header h1 {
+  font-size: 1.3rem;
+  margin: 0;
+  flex: 1;
+}
+
+.marketplace-subtitle {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.marketplace-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.marketplace-table th,
+.marketplace-table td {
+  text-align: left;
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid #e5e4e7;
+}
+
+.marketplace-filename {
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+.download-button {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #e5e4e7;
+  border-radius: 4px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.artifact-meta {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.3rem 1rem;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+}
+
+.artifact-meta dt {
+  opacity: 0.7;
+}
+
+.artifact-meta dd {
+  margin: 0;
+  font-family: ui-monospace, Consolas, monospace;
+}

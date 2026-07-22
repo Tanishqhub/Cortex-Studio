@@ -17,7 +17,7 @@ from flask import Blueprint, current_app, jsonify, session
 
 from .compiler import run_build
 from .auth import login_required
-from .models import Build, Workspace, db
+from .models import Artifact, Build, Workspace, db
 from .storage import LocalStorage
 from .workspaces import _get_owned_workspace
 
@@ -61,6 +61,21 @@ def _run_build_job(app, build_id):
             bin_ref = f"workspace_{build.workspace_id}/builds/{build.id}/out.bin"
             storage.write_bytes(bin_ref, result["bin_bytes"])
             build.bin_artifact_ref = bin_ref
+
+            # Marketplace entry (Phase 5): one Artifact per successful build,
+            # pointing at the raw objcopy binary (the thing a marketplace
+            # visitor actually wants to download, not the debug ELF). Build
+            # already carries the log/duration/timestamps/workspace/user this
+            # needs -- Artifact only stores what's specific to the binary
+            # itself. See docs/DECISIONS.md Phase 5.
+            db.session.add(
+                Artifact(
+                    build_id=build.id,
+                    filename=f"workspace_{build.workspace_id}_build_{build.id}.bin",
+                    size_bytes=len(result["bin_bytes"]),
+                    download_ref=bin_ref,
+                )
+            )
 
         db.session.commit()
 

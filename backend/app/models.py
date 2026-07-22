@@ -121,3 +121,46 @@ class Build(db.Model):
         if include_log:
             result["log_text"] = self.log_text
         return result
+
+
+class Artifact(db.Model):
+    """One downloadable binary from a successful Build, for the marketplace
+    (Phase 5). Deliberately thin: everything except the binary's own
+    filename/size/storage-ref (created_at, duration_ms, log_text,
+    workspace, user) already lives on Build, so this table joins through it
+    rather than duplicating it -- see docs/DECISIONS.md Phase 5 and the
+    phase 4 hand-off note.
+
+    Visibility: every Artifact is browsable/downloadable by any logged-in
+    user (see docs/DECISIONS.md Phase 5 for the chosen model and why).
+    """
+
+    __tablename__ = "artifacts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    build_id = db.Column(db.Integer, db.ForeignKey("builds.id"), nullable=False, unique=True, index=True)
+    filename = db.Column(db.String(255), nullable=False)
+    size_bytes = db.Column(db.Integer, nullable=False)
+    download_ref = db.Column(db.String(500), nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    build = db.relationship("Build")
+
+    def to_dict(self, include_log=False):
+        build = self.build
+        result = {
+            "id": self.id,
+            "build_id": self.build_id,
+            "filename": self.filename,
+            "size_bytes": self.size_bytes,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "workspace_id": build.workspace_id,
+            "workspace_name": build.workspace.name if build.workspace else None,
+            "user_id": build.user_id,
+            "user_email": build.user.email if build.user else None,
+            "duration_ms": build.duration_ms,
+            "build_created_at": build.created_at.isoformat() if build.created_at else None,
+        }
+        if include_log:
+            result["log_text"] = build.log_text
+        return result
