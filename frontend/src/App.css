@@ -1,0 +1,39 @@
+.auth-page {
+  max-width: 360px;
+  margin: 4rem auto;
+  padding: 1.5rem;
+  font-family: system-ui, sans-serif;
+  word-break: break-word;
+}
+
+.auth-page h1 {
+  font-size: 1.4rem;
+}
+
+.auth-page form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.auth-page label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.auth-page input {
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+.auth-page button {
+  padding: 0.6rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.auth-page .error {
+  color: #c0392b;
+}

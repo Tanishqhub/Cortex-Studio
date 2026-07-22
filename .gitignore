@@ -8,3 +8,5 @@ frontend/dist/
 *.db
 .env
 /backend/instance/
+.pytest_cache/
+.claude/
