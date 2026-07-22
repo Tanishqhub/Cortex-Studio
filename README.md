@@ -6,10 +6,54 @@ Built in phases; see `plan/` for the phase-by-phase spec and
 
 ## Status
 
-Phase 3 complete: an in-browser Monaco C editor with source persistence, a
-searchable signal-discovery panel, and generated `signals.h` headers so C
-code in the editor can reference A2L signals by name. No compilation yet
-(Phase 4) or marketplace (Phase 5).
+Phase 4 complete: workspace source compiles against a real `arm-none-eabi-gcc`
+inside a locked-down Podman sandbox, with compiler output (warnings and
+errors, not just pass/fail) shown in the browser. See `docs/SECURITY.md`
+for the full threat model — read this before touching anything in
+`backend/app/compiler.py` or `backend/sandbox/`. No marketplace yet (Phase 5).
+
+## Architecture (phase 4 additions)
+
+- **Compiler** (`backend/app/compiler.py`): given a workspace's saved
+  source and parsed A2L signals, writes an isolated per-build temp dir
+  (`user.c`, generated `signals.h`/`signals_def.c`, the fixed
+  `build/startup.c`/`build/link.ld`) and runs a single, fully
+  server-controlled `podman run` against it — `--network none`, memory/pids/
+  cpu caps, `--read-only` rootfs, `--cap-drop=ALL`,
+  `--security-opt no-new-privileges`, non-root `--user`, and a wall-clock
+  timeout that force-kills the container. The user never supplies a
+  compiler flag or path — only the contents of `user.c`. Full threat model,
+  exact flags, and honest residual risks: **`docs/SECURITY.md`**.
+- **Sandbox image** (`backend/sandbox/Containerfile`): Debian bookworm-slim
+  + the `gcc-arm-none-eabi` package (GNU Arm Embedded Toolchain — upstream:
+  https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads),
+  non-root `builder` user, fixed `ENTRYPOINT` (`build.sh`) that always runs
+  the same two commands (`arm-none-eabi-gcc ... -o out.elf` then
+  `arm-none-eabi-objcopy -O binary`) regardless of any argv passed in.
+  Build it once locally: `podman build -t c-sandbox:latest -f
+  backend/sandbox/Containerfile backend/sandbox`.
+- **Fixed build contract** (`build/startup.c`, `build/link.ld`): a minimal
+  Cortex-M4 vector table + reset handler and a generic-but-fixed linker
+  script, checked into the repo so builds are deterministic and never
+  depend on user-supplied linker bits.
+- **`signals_def.c`** (`header_gen.py::generate_definitions`): a companion
+  to `signals.h` — one zero-initialised tentative definition per declared
+  signal, so the `extern`s in `signals.h` have something to link against
+  (compile-time contract only, see `signals.h`'s own banner comment).
+- **Build model + API** (`backend/app/models.py::Build`,
+  `backend/app/builds.py`):
+  - `POST /api/workspaces/<id>/builds` → enqueue a build of the current
+    saved source (owner only); rejects with 429 if the caller already has
+    a build queued/running.
+  - `GET /api/builds/<id>` → poll status + full log (owner only).
+  - `GET /api/workspaces/<id>/builds` → recent builds for a workspace.
+  - Runs on a bounded `ThreadPoolExecutor` (`BUILD_WORKER_COUNT`, default
+    2) so a burst of requests queues instead of spawning unbounded
+    containers.
+- **Frontend**: a Compile button + log console panel in the workspace view
+  (`frontend/src/pages/Workspace.jsx`) — polls `GET /api/builds/<id>` and
+  shows the real compiler stdout/stderr (warnings and errors, not a
+  pass/fail badge), plus final status and duration.
 
 ## Architecture (phase 3 additions)
 
@@ -70,6 +114,25 @@ code in the editor can reference A2L signals by name. No compilation yet
   - `GET /api/workspaces/<id>/signals.h` → generated header (`text/plain`)
 
 ## Run locally
+
+### Sandbox image (required for compilation, Phase 4)
+
+Needs [Podman](https://podman.io/) installed (on Windows: `podman machine
+init` + `podman machine start` first). Build the sandbox image once:
+
+```bash
+podman build -t c-sandbox:latest -f backend/sandbox/Containerfile backend/sandbox
+```
+
+Verify the toolchain (matches what `docs/SECURITY.md` documents as tested):
+
+```bash
+podman run --rm --entrypoint arm-none-eabi-gcc c-sandbox:latest --version
+```
+
+Without this image, workspace source can still be saved/edited, but
+`POST /api/workspaces/<id>/builds` will fail (podman/image not found) — the
+error shows up in the build's log, not a silent failure.
 
 ### Backend (Flask)
 
@@ -135,8 +198,10 @@ python -m pytest tests/ -v
 ## Repo layout
 
 ```
-/backend        Flask app (app factory, models, auth blueprint, migrations)
-/frontend       Vite + React SPA
-/docs           DECISIONS.md — design decisions & scope cuts, append-only
-/plan           Phase specs for AI-agent-driven development
+/backend           Flask app (app factory, models, auth blueprint, migrations)
+/backend/sandbox    Containerfile + fixed entrypoint script for the compile sandbox
+/build              Fixed startup.c + link.ld shared by every sandboxed build
+/frontend          Vite + React SPA
+/docs              DECISIONS.md, SECURITY.md — decisions/cuts and the compile threat model
+/plan              Phase specs for AI-agent-driven development
 ```

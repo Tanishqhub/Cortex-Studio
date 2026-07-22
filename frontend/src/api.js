@@ -82,3 +82,11 @@ export function saveSource(id, code) {
 export function signalsHeaderUrl(id) {
   return `${BASE}/workspaces/${id}/signals.h`;
 }
+
+export function triggerBuild(workspaceId) {
+  return request(`/workspaces/${workspaceId}/builds`, { method: "POST" });
+}
+
+export function getBuild(buildId) {
+  return request(`/builds/${buildId}`);
+}

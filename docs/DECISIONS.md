@@ -165,3 +165,89 @@ will ask us to defend these.
   not occur in `Reference_a2l.a2l` (0 collisions across all 173 names), so
   left unfixed rather than adding client-side collision tracking for a
   case the graded sample never hits.
+
+## Phase 4
+
+- **`signals.h` externs need storage to link against — `signals_def.c`,
+  auto-generated alongside the header.** Phase 3 flagged this as a Phase 4
+  concern (see the `signals.h` banner). `header_gen.py::generate_definitions`
+  reuses the exact same name-resolution pass as `generate_header`
+  (`_resolve_signals`, refactored out of the old `generate_header` body so
+  both functions can't drift apart on identifiers) and emits one
+  zero-initialised tentative definition per declared signal. Zero, not a
+  real value, because this is still a compile-time contract only — there is
+  no real ECU memory behind these names (same caveat as `signals.h` itself).
+
+- **Fixed `build/startup.c` + `build/link.ld`, checked into the repo, never
+  regenerated per build.** The brief requires deterministic builds that
+  don't depend on user-supplied linker bits. `startup.c` is a minimal
+  Cortex-M4 vector table (just the entries ARMv7-M needs: initial SP,
+  Reset_Handler, and the fault/SysTick handlers — no peripheral IRQ slots,
+  since this profile is never flashed to real hardware) plus a
+  `Reset_Handler` that does the standard `.data`-copy/`.bss`-zero/`main()`
+  startup sequence. `link.ld` uses an arbitrary-but-fixed generic Cortex-M4
+  memory map (512K FLASH @ 0x08000000, 128K RAM @ 0x20000000) — consistent
+  is all that's needed since nothing here flashes real hardware.
+
+- **Sandbox image entrypoint is a fixed script (`build.sh`), not a bare
+  compiler.** Rejected making the image's `ENTRYPOINT` `arm-none-eabi-gcc`
+  directly (which would require two separate `podman run` calls — one for
+  `gcc`, one for `objcopy` — doubling container-startup overhead per build
+  and doubling the surface for a timeout to land mid-sequence). `build.sh`
+  is baked into the image at build time and ignores any argv it's given, so
+  even a bug in `compiler.py` that leaked user input into the command line
+  couldn't change what actually executes inside the container — see
+  `docs/SECURITY.md` T7.
+
+- **Toolchain installed via Debian's `gcc-arm-none-eabi` package, not a
+  hand-downloaded tarball from developer.arm.com.** Keeps the sandbox image
+  reproducible from the `Containerfile` alone (no separate download step to
+  keep in sync), at the cost of pinning to whatever toolchain version
+  Debian bookworm ships (12.2.1) rather than the latest upstream release.
+  Verified inside the built image: `arm-none-eabi-gcc --version` →
+  `arm-none-eabi-gcc (15:12.2.rel1-1) 12.2.1 20221205`. Upstream source:
+  https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads (linked
+  from the README).
+
+- **Polling (`GET /api/builds/<id>`), not SSE/streaming, for compiler
+  output.** The phase brief explicitly allows this fallback. The build
+  runner (`compiler.py::run_build`) is a single blocking
+  `subprocess.run(...)` call — there is no partial output to stream mid-way
+  through, since the whole point of the sandbox is that the server doesn't
+  get to peek inside a running container beyond its final stdout/stderr.
+  Real compiles for this scope finish in roughly 1-2 seconds, so the UX
+  cost of polling every ~800ms instead of true streaming is negligible.
+  Revisit if a future phase needs genuinely long-running or line-by-line
+  build feedback.
+
+- **Bounded worker pool = `ThreadPoolExecutor(max_workers=2)`,
+  per-user rate limit = "at most one outstanding build."** A thread pool
+  (not a process pool / external queue like Celery+Redis) was chosen
+  because the actual work (`subprocess.run` waiting on a remote `podman`
+  call over SSH) is I/O-bound, not CPU-bound, from Python's perspective —
+  threads are sufficient and avoid pulling in new infra for this scope. The
+  rate limit is deliberately simple (reject a second build while the user
+  already has one queued/running, HTTP 429) rather than a sliding-window
+  limiter, since the realistic abuse case at this scale is "many browser
+  tabs spamming Compile," which this fully prevents; it does not cap total
+  builds/hour for a well-behaved single client. Verified: 5 concurrent
+  build requests across 5 different users never exceeded 2 simultaneous
+  in-flight compiles (see phase hand-off notes).
+
+- **`Build` model keeps `artifact_ref` (ELF) and adds `bin_artifact_ref`
+  (raw binary from `objcopy`), even though the phase 4 model spec only
+  lists a single `artifact_ref`.** The reference build command explicitly
+  produces both `out.elf` (debug info, for a future "inspect the binary"
+  feature) and `out.bin` (what Phase 5 needs to serve as a plain downloadable
+  binary) — storing both now avoids re-deriving `.bin` from `.elf` later
+  or blocking Phase 5 on a schema change.
+
+- **Threat model, exact sandbox flags, and residual risks are documented in
+  `docs/SECURITY.md`**, per the phase's explicit requirement that this is a
+  required deliverable, not incidental documentation. Includes one
+  verified-by-testing correction to the phase brief's own T1 example: a
+  bare `while(1){}` does not hang `arm-none-eabi-gcc` (compilation doesn't
+  execute the loop), so the wall-clock timeout was instead verified via a
+  forced short timeout plus a real macro-expansion compile-time DoS attempt
+  that the memory cap caught first — see `docs/SECURITY.md` for the full
+  writeup.

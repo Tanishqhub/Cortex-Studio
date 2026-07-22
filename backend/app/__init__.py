@@ -4,6 +4,7 @@ from flask import Flask, jsonify, send_from_directory
 from flask_migrate import Migrate
 
 from .auth import auth_bp, login_required
+from .builds import builds_bp
 from .config import Config
 from .models import db
 from .workspaces import workspaces_bp
@@ -22,6 +23,7 @@ def create_app(config_class=Config):
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(workspaces_bp)
+    app.register_blueprint(builds_bp)
 
     @app.get("/api/health")
     def health():

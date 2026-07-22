@@ -1,0 +1,30 @@
+# Sandbox image for compiling untrusted user C against arm-none-eabi-gcc.
+#
+# Minimal on purpose: only the ARM GCC toolchain + binutils, no shell tools
+# beyond what the base image needs to run. Runs as a fixed non-root user;
+# the actual privilege drop (--cap-drop=ALL, --security-opt no-new-privileges,
+# --network none, --read-only, resource limits) is applied by the caller
+# (backend/app/compiler.py) at `podman run` time, not baked into the image.
+#
+# Toolchain source: Debian's `gcc-arm-none-eabi` package, which packages the
+# GNU Arm Embedded Toolchain (see README for the upstream link). Using the
+# distro package instead of hand-downloading a tarball keeps the image
+# reproducible from a Containerfile alone.
+FROM debian:bookworm-slim
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc-arm-none-eabi libnewlib-arm-none-eabi && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY build.sh /usr/local/bin/build.sh
+RUN chmod 755 /usr/local/bin/build.sh
+
+RUN useradd --no-create-home --uid 10001 --shell /usr/sbin/nologin builder
+
+WORKDIR /build
+USER builder
+
+# Fixed entrypoint, no CMD: the container always runs exactly this script
+# against whatever is in the mounted /build workdir. The user's C source
+# never controls the command that runs it (see docs/SECURITY.md, T7).
+ENTRYPOINT ["/usr/local/bin/build.sh"]

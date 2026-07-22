@@ -68,14 +68,15 @@ def sanitise_identifier(name):
     return ident
 
 
-def generate_header(measurements):
-    """measurements: list of signal dicts as returned by a2l_parser.parse_a2l
-    (name, datatype, matrix_dim, ...). Returns the full signals.h text.
-
-    Deterministic and ordered: signals are emitted in the order given, one
-    line per signal (or one comment line if the datatype is unsupported).
-    """
-    lines = [_BANNER]
+def _resolve_signals(measurements):
+    """Shared name-resolution pass: sanitises + de-duplicates identifiers in
+    signal order, same logic generate_header has always used. Returns a list
+    of dicts, either {"skipped": True, "name", "datatype"} for datatypes not
+    in TYPE_MAP, or {"skipped": False, "name", "ident", "c_type",
+    "matrix_dim"}. Used by both generate_header (declarations) and
+    generate_definitions (Phase 4: storage for the linker to resolve those
+    externs against, see docs/DECISIONS.md)."""
+    resolved = []
     used_idents = set()
 
     for signal in measurements:
@@ -84,7 +85,7 @@ def generate_header(measurements):
         c_type = TYPE_MAP.get(datatype)
 
         if c_type is None:
-            lines.append(f"/* unsupported type {datatype!r} for signal '{name}': skipped */")
+            resolved.append({"skipped": True, "name": name, "datatype": datatype})
             continue
 
         ident = sanitise_identifier(name)
@@ -95,13 +96,78 @@ def generate_header(measurements):
             suffix += 1
         used_idents.add(ident)
 
-        comment = f"  /* original A2L name: {name} */" if ident != name else ""
+        resolved.append(
+            {
+                "skipped": False,
+                "name": name,
+                "ident": ident,
+                "c_type": c_type,
+                "matrix_dim": signal.get("matrix_dim"),
+            }
+        )
 
-        matrix_dim = signal.get("matrix_dim")
-        if matrix_dim:
-            lines.append(f"extern {c_type} {ident}[{matrix_dim}];{comment}")
+    return resolved
+
+
+def generate_header(measurements):
+    """measurements: list of signal dicts as returned by a2l_parser.parse_a2l
+    (name, datatype, matrix_dim, ...). Returns the full signals.h text.
+
+    Deterministic and ordered: signals are emitted in the order given, one
+    line per signal (or one comment line if the datatype is unsupported).
+    """
+    lines = [_BANNER]
+
+    for signal in _resolve_signals(measurements):
+        if signal["skipped"]:
+            lines.append(f"/* unsupported type {signal['datatype']!r} for signal '{signal['name']}': skipped */")
+            continue
+
+        ident = signal["ident"]
+        comment = f"  /* original A2L name: {signal['name']} */" if ident != signal["name"] else ""
+
+        if signal["matrix_dim"]:
+            lines.append(f"extern {signal['c_type']} {ident}[{signal['matrix_dim']}];{comment}")
         else:
-            lines.append(f"extern {c_type} {ident};{comment}")
+            lines.append(f"extern {signal['c_type']} {ident};{comment}")
 
     lines.append(_FOOTER)
     return "\n".join(lines)
+
+
+_DEFINITIONS_BANNER = """/*
+ * signals_def.c -- AUTO-GENERATED. DO NOT EDIT BY HAND.
+ *
+ * Phase 4 concern (see signals.h's banner and docs/DECISIONS.md): signals.h
+ * declares these as `extern`, which satisfies the compiler but not the
+ * linker -- an extern with no definition anywhere is an undefined reference
+ * at link time. This file gives each declared signal exactly one
+ * zero-initialised definition so `-T link.ld startup.c signals_def.c
+ * user.c` links. Zero-initialised, not garbage: this is a compile-time
+ * contract only, not real ECU memory (see signals.h), so there is no
+ * meaningful initial value to give it.
+ */
+#include "signals.h"
+"""
+
+
+def generate_definitions(measurements):
+    """Companion to generate_header: one zero-initialised tentative
+    definition per signal generate_header declared `extern`, in the same
+    order, using the exact same resolved identifiers (calls
+    _resolve_signals independently, but it's a pure deterministic function
+    of `measurements`, so the identifiers always match signals.h for the
+    same input)."""
+    lines = [_DEFINITIONS_BANNER]
+
+    for signal in _resolve_signals(measurements):
+        if signal["skipped"]:
+            continue
+
+        ident = signal["ident"]
+        if signal["matrix_dim"]:
+            lines.append(f"{signal['c_type']} {ident}[{signal['matrix_dim']}];")
+        else:
+            lines.append(f"{signal['c_type']} {ident};")
+
+    return "\n".join(lines) + "\n"

@@ -71,3 +71,53 @@ class A2LFile(db.Model):
             "filename": self.filename,
             "uploaded_at": self.uploaded_at.isoformat() if self.uploaded_at else None,
         }
+
+
+class Build(db.Model):
+    """One compile attempt of a workspace's source. See
+    backend/app/compiler.py (the sandboxed build runner) and
+    backend/app/builds.py (the API + worker pool).
+
+    status transitions: queued -> running -> (success | error). A row is
+    created (status=queued) synchronously on POST so the client always gets
+    a build id back immediately; the worker pool thread updates it as the
+    build progresses.
+    """
+
+    __tablename__ = "builds"
+
+    id = db.Column(db.Integer, primary_key=True)
+    workspace_id = db.Column(db.Integer, db.ForeignKey("workspaces.id"), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    status = db.Column(db.String(20), nullable=False, default="queued")
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    duration_ms = db.Column(db.Integer, nullable=True)
+    exit_code = db.Column(db.Integer, nullable=True)
+    log_text = db.Column(db.Text, nullable=True)
+    # Storage-relative path to the linked ELF (with debug info). Phase 5's
+    # Artifact model is the one users download from; this is Phase 4's own
+    # record that a build produced *something*, kept simple per this
+    # phase's model spec (single nullable artifact_ref).
+    artifact_ref = db.Column(db.String(500), nullable=True)
+    # objcopy -O binary output alongside the ELF -- both are cheap to keep
+    # (see docs/DECISIONS.md, Phase 4) since the reference build command
+    # explicitly produces both and Phase 5 needs a raw binary to serve.
+    bin_artifact_ref = db.Column(db.String(500), nullable=True)
+
+    workspace = db.relationship("Workspace")
+    user = db.relationship("User")
+
+    def to_dict(self, include_log=True):
+        result = {
+            "id": self.id,
+            "workspace_id": self.workspace_id,
+            "user_id": self.user_id,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "duration_ms": self.duration_ms,
+            "exit_code": self.exit_code,
+            "has_artifact": self.artifact_ref is not None,
+        }
+        if include_log:
+            result["log_text"] = self.log_text
+        return result
