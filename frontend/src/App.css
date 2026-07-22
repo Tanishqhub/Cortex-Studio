@@ -37,3 +37,136 @@
 .auth-page .error {
   color: #c0392b;
 }
+
+.error {
+  color: #c0392b;
+}
+
+.workspace-list-page {
+  max-width: 640px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  font-family: system-ui, sans-serif;
+  text-align: left;
+}
+
+.workspace-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.workspace-create-form {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.workspace-create-form input {
+  flex: 1;
+  padding: 0.5rem;
+}
+
+.workspace-list {
+  list-style: none;
+  padding: 0;
+}
+
+.workspace-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #e5e4e7;
+}
+
+.workspace-meta {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.workspace-page {
+  max-width: 1200px;
+  margin: 1.5rem auto;
+  padding: 0 1.5rem;
+  font-family: system-ui, sans-serif;
+  text-align: left;
+}
+
+.workspace-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.workspace-header h1 {
+  font-size: 1.3rem;
+  margin: 0;
+  flex: 1;
+}
+
+.workspace-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.upload-button {
+  cursor: pointer;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid #e5e4e7;
+  border-radius: 4px;
+}
+
+.workspace-body {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.signal-panel {
+  width: 280px;
+  flex-shrink: 0;
+  border-right: 1px solid #e5e4e7;
+  padding-right: 1rem;
+}
+
+.signal-panel input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.4rem;
+  margin: 0.5rem 0;
+}
+
+.signal-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  height: 65vh;
+  overflow-y: auto;
+}
+
+.signal-list li {
+  cursor: pointer;
+  padding: 0.4rem 0.3rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.signal-list li:hover {
+  background: #f4f3ec;
+}
+
+.signal-name {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.85rem;
+}
+
+.signal-meta {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.editor-pane {
+  flex: 1;
+  min-width: 0;
+}

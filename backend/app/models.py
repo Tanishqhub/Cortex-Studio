@@ -31,6 +31,7 @@ class Workspace(db.Model):
     name = db.Column(db.String(255), nullable=False)
     owner_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    source_code = db.Column(db.Text, nullable=True)
 
     a2l_file = db.relationship(
         "A2LFile", uselist=False, back_populates="workspace", cascade="all, delete-orphan"

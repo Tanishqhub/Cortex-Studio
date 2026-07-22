@@ -6,9 +6,36 @@ Built in phases; see `plan/` for the phase-by-phase spec and
 
 ## Status
 
-Phase 2 complete: workspaces (per-user, ownership-enforced), .a2l upload,
-a MEASUREMENT/CHARACTERISTIC line-scanner parser, and a signals API. No
-in-browser editor, C compilation, or marketplace yet (later phases).
+Phase 3 complete: an in-browser Monaco C editor with source persistence, a
+searchable signal-discovery panel, and generated `signals.h` headers so C
+code in the editor can reference A2L signals by name. No compilation yet
+(Phase 4) or marketplace (Phase 5).
+
+## Architecture (phase 3 additions)
+
+- **Editor** (`frontend/src/pages/Workspace.jsx`): `@monaco-editor/react`
+  (`language="c"`) loads the workspace's saved source on open (falling back
+  to a starter template that `#include`s `"signals.h"`), edits locally,
+  and saves via an explicit Save button (see `docs/DECISIONS.md` for why
+  not autosave-on-debounce).
+- **Source persistence**: `Workspace.source_code` (nullable `TEXT`) via
+  `GET`/`PUT /api/workspaces/<id>/source`, owner-only, 256 KB cap enforced
+  server-side on the UTF-8 byte length.
+- **Signal discovery panel**: same page, calls the phase 2
+  `GET /api/workspaces/<id>/signals` endpoint, is searchable (client-side
+  filter over the 173-signal sample), and clicking a signal inserts its
+  sanitised C identifier at the Monaco cursor.
+- **Header generation** (`backend/app/header_gen.py`): `generate_header()`
+  turns the parsed MEASUREMENT list into a deterministic `signals.h` —
+  A2L datatype → `<stdint.h>` type via a fixed table (unknown datatypes are
+  skipped with a comment, never guessed), illegal-for-C names (dots/
+  brackets) sanitised into identifiers with the original name kept in a
+  trailing comment, `MATRIX_DIM` signals become array declarations. Served
+  at `GET /api/workspaces/<id>/signals.h` (`text/plain`, owner-only,
+  regenerated fresh from the workspace's current parsed signals on every
+  request — no stale-cache problem on re-upload). See `docs/DECISIONS.md`
+  for why a header (not accessor stubs or `-D` injection) and the "not
+  real linkage" caveat.
 
 ## Architecture (phase 2 additions)
 
@@ -38,6 +65,9 @@ in-browser editor, C compilation, or marketplace yet (later phases).
     signals/summary
   - `GET /api/workspaces/<id>/signals` → parsed signals + summary
     (measurement/characteristic counts, datatypes seen, skipped blocks)
+  - `GET /api/workspaces/<id>/source` → `{code}` saved C source (or `null`)
+  - `PUT /api/workspaces/<id>/source` `{code}` → save C source, 256 KB cap
+  - `GET /api/workspaces/<id>/signals.h` → generated header (`text/plain`)
 
 ## Run locally
 

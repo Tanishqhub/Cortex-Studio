@@ -37,3 +37,48 @@ export async function getCurrentUser() {
   if (!res.ok) throw new Error("failed to fetch current user");
   return res.json();
 }
+
+export function listWorkspaces() {
+  return request("/workspaces");
+}
+
+export function createWorkspace(name) {
+  return request("/workspaces", { method: "POST", body: JSON.stringify({ name }) });
+}
+
+export function getWorkspace(id) {
+  return request(`/workspaces/${id}`);
+}
+
+export function deleteWorkspace(id) {
+  return request(`/workspaces/${id}`, { method: "DELETE" });
+}
+
+export async function uploadA2L(id, file) {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${BASE}/workspaces/${id}/a2l`, {
+    method: "POST",
+    credentials: "include",
+    body: form,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Request failed with status ${res.status}`);
+  return data;
+}
+
+export function getSignals(id) {
+  return request(`/workspaces/${id}/signals`);
+}
+
+export function getSource(id) {
+  return request(`/workspaces/${id}/source`);
+}
+
+export function saveSource(id, code) {
+  return request(`/workspaces/${id}/source`, { method: "PUT", body: JSON.stringify({ code }) });
+}
+
+export function signalsHeaderUrl(id) {
+  return `${BASE}/workspaces/${id}/signals.h`;
+}

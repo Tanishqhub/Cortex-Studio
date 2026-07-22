@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { getCurrentUser, logout } from "./api";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import WorkspaceList from "./pages/WorkspaceList";
+import Workspace from "./pages/Workspace";
 import "./App.css";
 
 function Landing({ user, onLoggedOut }) {
@@ -17,6 +19,9 @@ function Landing({ user, onLoggedOut }) {
   return (
     <div className="auth-page">
       <h1>Logged in as {user.email}</h1>
+      <p>
+        <Link to="/workspaces">Go to workspaces</Link>
+      </p>
       <button onClick={handleLogout}>Logout</button>
     </div>
   );
@@ -47,6 +52,22 @@ export default function App() {
         element={
           <RequireAuth user={user} loading={loading}>
             {user && <Landing user={user} onLoggedOut={() => setUser(null)} />}
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/workspaces"
+        element={
+          <RequireAuth user={user} loading={loading}>
+            {user && <WorkspaceList user={user} onLoggedOut={() => setUser(null)} />}
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/workspaces/:id"
+        element={
+          <RequireAuth user={user} loading={loading}>
+            {user && <Workspace />}
           </RequireAuth>
         }
       />

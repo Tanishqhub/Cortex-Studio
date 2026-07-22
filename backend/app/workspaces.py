@@ -1,16 +1,18 @@
 import json
 from datetime import datetime, timezone
 
-from flask import Blueprint, current_app, jsonify, request, session
+from flask import Blueprint, Response, current_app, jsonify, request, session
 
 from .a2l_parser import ParseError, parse_a2l
 from .auth import login_required
+from .header_gen import generate_header
 from .models import A2LFile, Workspace, db
 from .storage import LocalStorage
 
 workspaces_bp = Blueprint("workspaces", __name__, url_prefix="/api/workspaces")
 
 ALLOWED_A2L_EXTENSION = ".a2l"
+MAX_SOURCE_SIZE_BYTES = 256 * 1024
 
 
 def _storage():
@@ -157,3 +159,49 @@ def get_signals(workspace_id):
         ),
         200,
     )
+
+
+@workspaces_bp.get("/<int:workspace_id>/source")
+@login_required
+def get_source(workspace_id):
+    workspace = _get_owned_workspace(workspace_id)
+    if workspace is None:
+        return jsonify({"error": "workspace not found"}), 404
+
+    return jsonify({"code": workspace.source_code}), 200
+
+
+@workspaces_bp.put("/<int:workspace_id>/source")
+@login_required
+def save_source(workspace_id):
+    workspace = _get_owned_workspace(workspace_id)
+    if workspace is None:
+        return jsonify({"error": "workspace not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    code = data.get("code")
+    if not isinstance(code, str):
+        return jsonify({"error": "'code' (string) is required"}), 400
+
+    if len(code.encode("utf-8")) > MAX_SOURCE_SIZE_BYTES:
+        return jsonify({"error": f"source exceeds the {MAX_SOURCE_SIZE_BYTES // 1024} KB size limit"}), 400
+
+    workspace.source_code = code
+    db.session.commit()
+    return jsonify({"ok": True}), 200
+
+
+@workspaces_bp.get("/<int:workspace_id>/signals.h")
+@login_required
+def get_signals_header(workspace_id):
+    workspace = _get_owned_workspace(workspace_id)
+    if workspace is None:
+        return jsonify({"error": "workspace not found"}), 404
+
+    a2l_file = workspace.a2l_file
+    if a2l_file is None:
+        return jsonify({"error": "no A2L file uploaded for this workspace yet"}), 404
+
+    measurements = json.loads(a2l_file.signals_json)["measurements"]
+    header_text = generate_header(measurements)
+    return Response(header_text, mimetype="text/plain")
