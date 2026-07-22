@@ -6,6 +6,7 @@ from flask_migrate import Migrate
 from .auth import auth_bp, login_required
 from .config import Config
 from .models import db
+from .workspaces import workspaces_bp
 
 migrate = Migrate()
 
@@ -20,6 +21,7 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(workspaces_bp)
 
     @app.get("/api/health")
     def health():

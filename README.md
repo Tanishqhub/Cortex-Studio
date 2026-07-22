@@ -6,9 +6,38 @@ Built in phases; see `plan/` for the phase-by-phase spec and
 
 ## Status
 
-Phase 1 complete: project skeleton + session-cookie authentication.
-Flask serves the built React SPA on a single origin. No workspaces, A2L
-parsing, or compilation yet (later phases).
+Phase 2 complete: workspaces (per-user, ownership-enforced), .a2l upload,
+a MEASUREMENT/CHARACTERISTIC line-scanner parser, and a signals API. No
+in-browser editor, C compilation, or marketplace yet (later phases).
+
+## Architecture (phase 2 additions)
+
+- **Workspaces** (`backend/app/models.py`): a `Workspace` belongs to one
+  `User` (`owner_id`) and has at most one `A2LFile`. Every workspace route
+  (`backend/app/workspaces.py`) looks the workspace up scoped to
+  `owner_id == session["user_id"]` and returns 404 (not 403) if it doesn't
+  belong to the caller — see `docs/DECISIONS.md`.
+- **Storage** (`backend/app/storage.py`): uploaded `.a2l` files are written
+  through a small `LocalStorage` interface (`write_bytes`/`read_text`/
+  `delete`) rather than direct filesystem calls, so a Cloudflare R2-backed
+  implementation can be dropped in later without touching the routes.
+- **A2L parser** (`backend/app/a2l_parser.py`): a line-scanner (not a full
+  ASAM grammar) that extracts MEASUREMENT and CHARACTERISTIC blocks —
+  name, datatype, ECU address, limits, compu_method, matrix_dim — and
+  normalises them into the signal shape the API returns. Verified against
+  `_resources/Reference_a2l.a2l`: 173 measurements, 0 characteristics.
+  CHARACTERISTIC field extraction is intentionally not implemented (see
+  `docs/DECISIONS.md`) since the sample has none to verify against.
+- **API**:
+  - `POST /api/workspaces` `{name}` → create
+  - `GET /api/workspaces` → list caller's workspaces
+  - `GET /api/workspaces/<id>` → details (owner only)
+  - `DELETE /api/workspaces/<id>` → delete (owner only)
+  - `POST /api/workspaces/<id>/a2l` → multipart upload, field name `file`,
+    `.a2l` extension only, 5 MB cap; stores the raw file and the parsed
+    signals/summary
+  - `GET /api/workspaces/<id>/signals` → parsed signals + summary
+    (measurement/characteristic counts, datatypes seen, skipped blocks)
 
 ## Run locally
 
