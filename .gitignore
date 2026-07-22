@@ -4,6 +4,7 @@ venv/
 .venv/
 node_modules/
 frontend/dist/
+backend/venv/
 *.sqlite
 *.db
 .env
