@@ -32,3 +32,10 @@ phase3.txt                	Monaco C editor + signal panel + signals.h generation
 phase4.txt	                Compilation + Podman sandbox + threat model (most-graded)
 phase5.txt	                Marketplace + README/walkthrough/test-accounts
 06_devops_instructions.txt	Your DevOps guide: AWS free tier + rootless Podman + Cloudflare
+
+# Winding up:
+- All 5 phases built as per plan.
+- After using the app I get the idea now what is really required
+- Ok i get it now what signal, ECU codes & what this Embedded c code is doing
+- So I already have an undeployed project, few UI changes are required for artifacts, more edge cases to be handled
+- Day 2 onwards i can start reading the codebase and understand the workflow better
