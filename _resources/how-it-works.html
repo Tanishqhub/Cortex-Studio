@@ -1,0 +1,993 @@
+<title>How Firmware Runs — Cortex Studio</title>
+<style>
+  /* ---- tokens: light ---------------------------------------------- */
+  :root {
+    --ground:      #F6F7F9;
+    --panel:       #FFFFFF;
+    --panel-sunk:  #EDEFF3;
+    --rule:        #DCE0E7;
+    --rule-strong: #C2C8D2;
+
+    --ink:         #14181F;
+    --ink-soft:    #4C5563;
+    --ink-faint:   #79828F;
+
+    --copper:      #A85B24;
+    --copper-soft: #F0E0D3;
+    --copper-line: #DCBB9C;
+
+    --solder:      #1F6F68;
+    --solder-soft: #DCECEA;
+
+    --alert:       #A33B2E;
+    --alert-soft:  #F5DFDB;
+
+    --dim:         #9AA3AF;
+
+    --font-mono: ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+    --shadow: 0 1px 2px rgba(20, 24, 31, .05), 0 8px 24px -12px rgba(20, 24, 31, .12);
+  }
+
+  /* ---- tokens: dark ----------------------------------------------- */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:      #0D1015;
+      --panel:       #161A21;
+      --panel-sunk:  #10141A;
+      --rule:        #262C36;
+      --rule-strong: #39414E;
+
+      --ink:         #E8EBF0;
+      --ink-soft:    #A3ACBA;
+      --ink-faint:   #6F7889;
+
+      --copper:      #D98A4E;
+      --copper-soft: #33231600;
+      --copper-line: #5C3D22;
+
+      --solder:      #4FB3A8;
+      --solder-soft: #16302E;
+
+      --alert:       #E07A66;
+      --alert-soft:  #331E1A;
+
+      --dim:         #4B5461;
+
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 32px -16px rgba(0, 0, 0, .7);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #0D1015;
+    --panel:       #161A21;
+    --panel-sunk:  #10141A;
+    --rule:        #262C36;
+    --rule-strong: #39414E;
+    --ink:         #E8EBF0;
+    --ink-soft:    #A3ACBA;
+    --ink-faint:   #6F7889;
+    --copper:      #D98A4E;
+    --copper-soft: #2A1D12;
+    --copper-line: #5C3D22;
+    --solder:      #4FB3A8;
+    --solder-soft: #16302E;
+    --alert:       #E07A66;
+    --alert-soft:  #331E1A;
+    --dim:         #4B5461;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 32px -16px rgba(0, 0, 0, .7);
+  }
+
+  :root[data-theme="light"] {
+    --ground:      #F6F7F9;
+    --panel:       #FFFFFF;
+    --panel-sunk:  #EDEFF3;
+    --rule:        #DCE0E7;
+    --rule-strong: #C2C8D2;
+    --ink:         #14181F;
+    --ink-soft:    #4C5563;
+    --ink-faint:   #79828F;
+    --copper:      #A85B24;
+    --copper-soft: #F0E0D3;
+    --copper-line: #DCBB9C;
+    --solder:      #1F6F68;
+    --solder-soft: #DCECEA;
+    --alert:       #A33B2E;
+    --alert-soft:  #F5DFDB;
+    --dim:         #9AA3AF;
+    --shadow: 0 1px 2px rgba(20, 24, 31, .05), 0 8px 24px -12px rgba(20, 24, 31, .12);
+  }
+
+  /* ---- base -------------------------------------------------------- */
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: clamp(24px, 5vw, 64px) clamp(18px, 4vw, 40px) 96px;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(40px, 6vw, 72px);
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  p { margin: 0; max-width: 64ch; }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: .88em;
+    background: var(--panel-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: .08em .36em;
+  }
+
+  /* ---- masthead ---------------------------------------------------- */
+  .masthead {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding-bottom: 28px;
+    border-bottom: 2px solid var(--ink);
+  }
+
+  .masthead h1 {
+    font-size: clamp(30px, 5.2vw, 46px);
+    line-height: 1.08;
+  }
+
+  .masthead p {
+    color: var(--ink-soft);
+    font-size: 17px;
+  }
+
+  .specline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 28px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+    padding-top: 4px;
+  }
+  .specline b {
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+
+  /* ---- primer ------------------------------------------------------ */
+  .primer {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .primer-cell {
+    background: var(--panel);
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .primer-cell h3 {
+    font-size: 13px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--copper);
+  }
+  .primer-cell p {
+    font-size: 14.5px;
+    color: var(--ink-soft);
+  }
+
+  /* ---- figure shell ------------------------------------------------ */
+  .figure {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .fig-head {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  .fig-head h2 {
+    font-size: clamp(21px, 3vw, 27px);
+  }
+  .fig-head p {
+    color: var(--ink-soft);
+    font-size: 15px;
+  }
+
+  /* ---- boot player ------------------------------------------------- */
+  .boot {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 800px) {
+    .boot { grid-template-columns: 1fr; }
+  }
+
+  .stage {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stage-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--panel-sunk);
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .stage-step {
+    color: var(--copper);
+    font-weight: 600;
+  }
+
+  .stage-body {
+    padding: 24px 22px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 232px;
+  }
+  .stage-body h3 {
+    font-size: 19px;
+    color: var(--ink);
+  }
+  .stage-body p {
+    font-size: 15px;
+    color: var(--ink-soft);
+  }
+  .stage-note {
+    margin-top: 2px;
+    padding: 12px 14px;
+    border-left: 3px solid var(--copper);
+    background: var(--copper-soft);
+    border-radius: 0 6px 6px 0;
+    font-size: 14px;
+    color: var(--ink);
+  }
+  .stage-note b { color: var(--copper); }
+
+  .regs {
+    display: flex;
+    gap: 22px;
+    flex-wrap: wrap;
+    padding: 12px 22px;
+    border-top: 1px dashed var(--rule);
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+    background: var(--panel-sunk);
+  }
+  .reg { display: flex; gap: 8px; align-items: baseline; }
+  .reg span { color: var(--ink-faint); letter-spacing: .1em; }
+  .reg b { color: var(--solder); font-weight: 600; }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 14px 22px 16px;
+    border-top: 1px solid var(--rule);
+  }
+
+  button {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink);
+    background: var(--panel);
+    border: 1px solid var(--rule-strong);
+    border-radius: 5px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  button:hover:not(:disabled) {
+    border-color: var(--copper);
+    color: var(--copper);
+  }
+  button:disabled { opacity: .38; cursor: default; }
+  button:focus-visible {
+    outline: 2px solid var(--copper);
+    outline-offset: 2px;
+  }
+  button.primary {
+    background: var(--copper);
+    border-color: var(--copper);
+    color: #FFF;
+  }
+  button.primary:hover:not(:disabled) {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: #FFF;
+  }
+
+  .ticks {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+  }
+  .tick {
+    width: 16px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--rule-strong);
+    transition: background .2s;
+  }
+  .tick.done { background: var(--copper-line); }
+  .tick.now  { background: var(--copper); }
+
+  /* ---- memory map -------------------------------------------------- */
+  .memmap {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    padding: 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .bank { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+  .bank-head {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .bank-head b {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: .1em;
+    color: var(--ink);
+  }
+  .bank-head span {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .region {
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    padding: 9px 10px;
+    background: var(--panel-sunk);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    transition: border-color .25s, background .25s, transform .25s, box-shadow .25s;
+  }
+  .region b {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink);
+    letter-spacing: .02em;
+  }
+  .region span {
+    font-size: 11px;
+    color: var(--ink-faint);
+    line-height: 1.35;
+  }
+  .region .addr {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .region.grow { flex: 1; min-height: 46px; }
+
+  .region.on {
+    border-color: var(--copper);
+    background: var(--copper-soft);
+    box-shadow: 0 0 0 2px var(--copper-soft);
+  }
+  .region.on b { color: var(--copper); }
+
+  .region.flow {
+    border-color: var(--solder);
+    background: var(--solder-soft);
+    animation: pulse 1.1s ease-in-out infinite;
+  }
+  .region.flow b { color: var(--solder); }
+
+  .region.zeroed {
+    border-color: var(--solder);
+    background: var(--solder-soft);
+  }
+  .region.zeroed b { color: var(--solder); }
+
+  .region.idle { opacity: .42; }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 var(--solder-soft); }
+    50%      { box-shadow: 0 0 0 5px var(--solder-soft); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .region.flow { animation: none; }
+    * { transition-duration: .01ms !important; }
+  }
+
+  .sp-marker {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--dim);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    transition: color .25s;
+  }
+  .sp-marker.on { color: var(--copper); font-weight: 600; }
+
+  .memmap-foot {
+    grid-column: 1 / -1;
+    padding-top: 10px;
+    border-top: 1px dashed var(--rule);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    line-height: 1.5;
+  }
+
+  /* ---- payoff ------------------------------------------------------ */
+  .payoff {
+    background: var(--panel);
+    border: 1px solid var(--copper-line);
+    border-left: 4px solid var(--copper);
+    border-radius: 0 8px 8px 0;
+    padding: 26px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .payoff h2 { font-size: 20px; color: var(--copper); }
+  .payoff p { font-size: 15.5px; color: var(--ink-soft); }
+  .payoff .kicker {
+    font-size: 16px;
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* ---- pipeline ---------------------------------------------------- */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .node {
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 16px 18px;
+  }
+
+  .node-num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--copper);
+    letter-spacing: .04em;
+    padding-top: 2px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .node-body { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .node-body b { font-size: 15px; color: var(--ink); }
+  .node-body p { font-size: 14px; color: var(--ink-soft); }
+
+  .node.vault {
+    border-color: var(--copper);
+    border-width: 2px;
+    background: var(--copper-soft);
+    padding: 22px 20px;
+  }
+  .node.vault .node-body b { font-size: 17px; color: var(--copper); }
+
+  .locks {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(196px, 1fr));
+    gap: 1px;
+    background: var(--copper-line);
+    border: 1px solid var(--copper-line);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .locks li {
+    background: var(--panel);
+    padding: 11px 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .locks b {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink);
+  }
+  .locks span {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.4;
+  }
+
+  .poll-note {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    border: 1px dashed var(--rule-strong);
+    border-radius: 8px;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    background: transparent;
+  }
+  .poll-note b {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--solder);
+    white-space: nowrap;
+  }
+
+  /* ---- closing ----------------------------------------------------- */
+  .closing {
+    border-top: 2px solid var(--ink);
+    padding-top: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .closing h2 { font-size: 19px; }
+  .closing p { font-size: 15.5px; color: var(--ink-soft); max-width: 68ch; }
+  .closing .src {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    line-height: 1.7;
+    margin-top: 6px;
+  }
+</style>
+
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Cortex Studio · explainer</p>
+    <h1>How firmware actually runs<br>— and what your app does to make it</h1>
+    <p>Two figures. The first traces a chip from the moment power arrives to the moment your code is looping forever. The second traces your C source from the Compile button to the marketplace.</p>
+    <div class="specline">
+      <span><b>Target</b> ARM Cortex-M4</span>
+      <span><b>FLASH</b> 0x08000000 · 512K</span>
+      <span><b>RAM</b> 0x20000000 · 128K</span>
+      <span><b>Signals</b> 173</span>
+    </div>
+  </header>
+
+  <section class="primer">
+    <div class="primer-cell">
+      <h3>Firmware</h3>
+      <p>Code that lives inside a device instead of on a computer. Your microwave has it. You never installed it.</p>
+    </div>
+    <div class="primer-cell">
+      <h3>Bare metal</h3>
+      <p>No operating system underneath. No <code>printf</code>, no files, no internet. Just the chip and your instructions.</p>
+    </div>
+    <div class="primer-cell">
+      <h3>The consequence</h3>
+      <p>Nothing sets anything up for you. Even getting to <code>main()</code> is work your own code has to do first.</p>
+    </div>
+  </section>
+
+  <section class="figure">
+    <div class="fig-head">
+      <p class="eyebrow">Figure 1</p>
+      <h2>The boot sequence</h2>
+      <p>Press Power on and step through it. Watch the memory map on the right — every step below is real work performed by <code>build/startup.c</code>, a file checked into your repo that gets compiled into every single build.</p>
+    </div>
+
+    <div class="boot">
+      <div class="stage">
+        <div class="stage-bar">
+          <span>CPU state</span>
+          <span class="stage-step" id="stepLabel">POWERED OFF</span>
+        </div>
+
+        <div class="stage-body">
+          <h3 id="stepTitle">The chip is asleep</h3>
+          <p id="stepText">No power, nothing running. Your compiled code is sitting in FLASH memory, exactly where it was written. FLASH keeps its contents with the power off — that is the whole point of it.</p>
+          <div class="stage-note" id="stepNote" hidden></div>
+        </div>
+
+        <div class="regs">
+          <div class="reg"><span>MSP</span><b id="regSp">——</b></div>
+          <div class="reg"><span>PC</span><b id="regPc">——</b></div>
+        </div>
+
+        <div class="controls">
+          <button class="primary" id="btnMain">Power on</button>
+          <button id="btnPrev" disabled>Back</button>
+          <button id="btnNext" disabled>Next</button>
+          <div class="ticks" id="ticks"></div>
+        </div>
+      </div>
+
+      <div class="memmap">
+        <div class="bank">
+          <div class="bank-head">
+            <b>FLASH</b>
+            <span>0x08000000 · 512K · read-only</span>
+          </div>
+          <div class="region idle" id="r-vec">
+            <b>.isr_vector</b>
+            <span class="addr">0x08000000</span>
+            <span>The vector table. Word 0 and word 1 are the only things the chip reads unaided.</span>
+          </div>
+          <div class="region idle grow" id="r-text">
+            <b>.text</b>
+            <span>Your compiled instructions — <code>startup.c</code>, <code>signals_def.c</code>, <code>user.c</code>.</span>
+          </div>
+          <div class="region idle" id="r-dataload">
+            <b>.data load image</b>
+            <span>Initial values for variables, waiting to be copied into RAM.</span>
+          </div>
+        </div>
+
+        <div class="bank">
+          <div class="bank-head">
+            <b>RAM</b>
+            <span>0x20000000 · 128K · read/write</span>
+          </div>
+          <div class="region idle" id="r-data">
+            <b>.data</b>
+            <span class="addr">0x20000000</span>
+            <span>Variables that start with a value.</span>
+          </div>
+          <div class="region idle" id="r-bss">
+            <b>.bss</b>
+            <span>Variables that start at zero — <b>all 173 signals live here.</b></span>
+          </div>
+          <div class="region idle grow" id="r-free">
+            <b>free</b>
+            <span>Unused.</span>
+          </div>
+          <div class="region idle" id="r-stack">
+            <b>stack</b>
+            <span>Grows downward from the top of RAM.</span>
+          </div>
+          <div class="sp-marker" id="spMarker">top of RAM · 0x20020000</div>
+        </div>
+
+        <p class="memmap-foot">Addresses taken from build/link.ld. Program-counter values are illustrative.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="payoff">
+    <h2>This is why your signals are always zero</h2>
+    <p class="kicker">Step 4 zeroes <code>.bss</code>. All 173 signals live in <code>.bss</code>. Nothing ever writes them afterwards.</p>
+    <p>On a real car, an XCP tool would be attached over CAN, streaming live pedal and brake values into those memory slots many times a second. Cortex Studio has no cable, no protocol, no car. So <code>Acc_Pedal_Pos</code> is set to 0 at boot and stays 0 forever.</p>
+    <p>That is not a bug — it is the honest edge of the scope. The app is answering “is this code written correctly for this ECU’s vocabulary?”, not “what is the pedal doing right now?”</p>
+  </section>
+
+  <section class="figure">
+    <div class="fig-head">
+      <p class="eyebrow">Figure 2</p>
+      <h2>What happens when you click Compile</h2>
+      <p>Nine steps from the button to the marketplace. Step 6 is the one the assignment is really grading.</p>
+    </div>
+
+    <div class="pipeline">
+      <div class="node">
+        <div class="node-num">01</div>
+        <div class="node-body">
+          <b>Your browser saves first</b>
+          <p>Quietly, before anything else. The server compiles the <em>saved</em> version — without this you would fix a typo, hit Compile, and get the error from your old code.</p>
+        </div>
+      </div>
+
+      <div class="node">
+        <div class="node-num">02</div>
+        <div class="node-body">
+          <b>Three guards on the door</b>
+          <p>Is this actually your workspace? Is there any code in it? Do you already have a build running? That last one is a traffic light — one build per person, so nobody can click Compile 500 times and melt the server.</p>
+        </div>
+      </div>
+
+      <div class="node">
+        <div class="node-num">03</div>
+        <div class="node-body">
+          <b>A ticket, returned instantly</b>
+          <p>The server writes down “build #12, waiting” and replies immediately — before compiling anything. Like a restaurant buzzer: you get the buzzer now, the food later. Otherwise the page would freeze for two seconds.</p>
+        </div>
+      </div>
+
+      <div class="node">
+        <div class="node-num">04</div>
+        <div class="node-body">
+          <b>A worker picks it up</b>
+          <p>Two workers exist. Not unlimited — so a hundred people clicking at once forms an orderly queue instead of launching a hundred compilers.</p>
+        </div>
+      </div>
+
+      <div class="node">
+        <div class="node-num">05</div>
+        <div class="node-body">
+          <b>Five files into a fresh folder</b>
+          <p><code>user.c</code> is yours. <code>signals.h</code> and <code>signals_def.c</code> are generated from the A2L. <code>startup.c</code> and <code>link.ld</code> are fixed files from the repo that you cannot touch.</p>
+        </div>
+      </div>
+
+      <div class="node vault">
+        <div class="node-num">06</div>
+        <div class="node-body">
+          <b>The sealed room</b>
+          <p>You are running a stranger’s code on your server. So the compiler does not run on your server — it runs in a disposable container with every door locked, and the container is destroyed afterwards.</p>
+          <ul class="locks">
+            <li><b>no network</b><span>Cannot phone home or send anything out.</span></li>
+            <li><b>256 MB cap</b><span>Cannot eat all the memory.</span></li>
+            <li><b>64 processes max</b><span>Cannot spawn copies until the server dies.</span></li>
+            <li><b>read-only disk</b><span>One temp folder writable. Nothing else.</span></li>
+            <li><b>runs as nobody</b><span>No administrator powers inside.</span></li>
+            <li><b>15 second limit</b><span>Hangs, and it is killed outright.</span></li>
+            <li><b>fixed script</b><span>The room knows two commands and ignores anything you send it.</span></li>
+            <li><b>fresh every time</b><span>Nothing survives between builds.</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="node">
+        <div class="node-num">07</div>
+        <div class="node-body">
+          <b>Two commands, always the same two</b>
+          <p><code>arm-none-eabi-gcc</code> compiles everything into <code>out.elf</code>. Then <code>objcopy</code> strips it down to <code>out.bin</code> — raw instructions, the actual firmware. You never supply a command, a filename, or a setting. Only the contents of one file.</p>
+        </div>
+      </div>
+
+      <div class="node">
+        <div class="node-num">08</div>
+        <div class="node-body">
+          <b>A suspicious verdict</b>
+          <p>Success requires all three: the compiler said OK, <em>and</em> the files actually exist, <em>and</em> they are under 2 MB. If the compiler claims success but produced nothing, it is marked failed. No silently pretending.</p>
+        </div>
+      </div>
+
+      <div class="node">
+        <div class="node-num">09</div>
+        <div class="node-body">
+          <b>Onto the shared shelf</b>
+          <p>A marketplace entry is created, visible and downloadable by anyone logged in. The temp folder is deleted no matter what happened.</p>
+        </div>
+      </div>
+
+      <div class="poll-note">
+        <b>meanwhile</b>
+        <span>Your browser asks “done yet?” every 0.8 seconds, and paints the real compiler output — genuine errors and warnings, not a green tick — the moment it arrives.</span>
+      </div>
+    </div>
+  </section>
+
+  <footer class="closing">
+    <h2>The whole thing in one breath</h2>
+    <p>A car computer stores values in numbered memory slots. The A2L file labels them. Your app reads that label sheet, turns it into a C vocabulary list, lets you write code using those names, and compiles it into real Cortex-M firmware — inside a sealed, disposable, internet-less container, because the code came from a stranger. The firmware would genuinely boot. It is just never flashed, so the values it reads are the zeros that step 4 put there.</p>
+    <p class="src">Sources in this repo — build/startup.c · build/link.ld · backend/app/compiler.py · backend/sandbox/build.sh · backend/app/header_gen.py · docs/SECURITY.md</p>
+  </footer>
+
+</div>
+
+<script>
+  var steps = [
+    {
+      label: "POWERED OFF",
+      title: "The chip is asleep",
+      text: "No power, nothing running. Your compiled code is sitting in FLASH memory, exactly where it was written. FLASH keeps its contents with the power off — that is the whole point of it.",
+      sp: "——", pc: "——",
+      map: {}
+    },
+    {
+      label: "RESET · WORD 0",
+      title: "The chip reads one number",
+      text: "Power arrives. A Cortex-M chip is hardwired to do exactly one thing first: read the very first word sitting at the start of FLASH. That word is the address it should use as the top of the stack.",
+      note: "It finds <b>0x20020000</b> — the top of RAM. That value came from <code>_estack</code> in your link.ld.",
+      sp: "0x20020000", pc: "——",
+      map: { "r-vec": "on", "r-stack": "on", spOn: true }
+    },
+    {
+      label: "RESET · WORD 1",
+      title: "Then it reads the next one",
+      text: "The second word of the vector table is the address of Reset_Handler — the first function that will run. The chip jumps there. Everything from here on is your own code doing the work.",
+      note: "Those two words are the <b>only</b> thing the chip can find on its own. Everything else has to be arranged by the code you wrote.",
+      sp: "0x20020000", pc: "0x08000141",
+      map: { "r-vec": "on", "r-text": "on" }
+    },
+    {
+      label: "COPY .DATA",
+      title: "Move the starting values into RAM",
+      text: "Variables that begin with a value have their initial contents stored in FLASH, because RAM is empty on power-up. Reset_Handler copies them across, word by word, in a small loop.",
+      note: "This is the <code>while (dst &lt; &amp;_edata)</code> loop in your startup.c. Roughly six lines doing real work.",
+      sp: "0x20020000", pc: "0x08000149",
+      map: { "r-dataload": "flow", "r-data": "flow", "r-text": "on" }
+    },
+    {
+      label: "ZERO .BSS",
+      title: "Wipe everything else to zero",
+      text: "Variables with no starting value get one region of RAM called .bss, and the C standard promises they all begin at zero. Nobody does that for you on bare metal — so Reset_Handler writes zeros across the whole region itself.",
+      note: "<b>All 173 of your signals live in .bss.</b> This is the exact instant <code>Acc_Pedal_Pos</code> becomes 0 — and nothing ever changes it again.",
+      sp: "0x20020000", pc: "0x08000155",
+      map: { "r-bss": "zeroed", "r-text": "on" }
+    },
+    {
+      label: "CALL MAIN",
+      title: "Finally, your code",
+      text: "Memory is now in the state C expects. Reset_Handler calls main(). Everything up to this point was setup that a normal computer's operating system would have done for you.",
+      sp: "0x2001FFE8", pc: "0x080001C5",
+      map: { "r-text": "on", "r-bss": "zeroed", "r-data": "on" }
+    },
+    {
+      label: "RUNNING",
+      title: "Your logic executes",
+      text: "Your if-statement runs as real ARM instructions. It reaches into .bss to read Acc_Pedal_Pos, compares it against 200, and takes the branch. All completely real — the chip is genuinely doing this.",
+      note: "It reads <b>0</b>. Not because the comparison is broken, but because nothing outside ever wrote a value there.",
+      sp: "0x2001FFE0", pc: "0x080001D3",
+      map: { "r-text": "on", "r-bss": "zeroed" }
+    },
+    {
+      label: "LOOPING",
+      title: "And then it never stops",
+      text: "main() returns — and there is nothing to return to. No shell, no operating system, no desktop. So startup.c catches it in an empty infinite loop. Firmware does not exit; it runs until the power is cut.",
+      note: "That <code>while (1) { }</code> at the bottom of your startup.c is not a placeholder. It is the correct ending.",
+      sp: "0x20020000", pc: "0x08000161",
+      map: { "r-text": "on", "r-bss": "zeroed" }
+    }
+  ];
+
+  var regionIds = ["r-vec", "r-text", "r-dataload", "r-data", "r-bss", "r-free", "r-stack"];
+  var i = 0;
+  var started = false;
+
+  var elLabel  = document.getElementById("stepLabel");
+  var elTitle  = document.getElementById("stepTitle");
+  var elText   = document.getElementById("stepText");
+  var elNote   = document.getElementById("stepNote");
+  var elSp     = document.getElementById("regSp");
+  var elPc     = document.getElementById("regPc");
+  var elSpMark = document.getElementById("spMarker");
+  var btnMain  = document.getElementById("btnMain");
+  var btnPrev  = document.getElementById("btnPrev");
+  var btnNext  = document.getElementById("btnNext");
+  var elTicks  = document.getElementById("ticks");
+
+  for (var t = 0; t < steps.length; t++) {
+    var d = document.createElement("div");
+    d.className = "tick";
+    elTicks.appendChild(d);
+  }
+  var tickEls = elTicks.children;
+
+  function render() {
+    var s = steps[i];
+
+    elLabel.textContent = s.label;
+    elTitle.textContent = s.title;
+    elText.textContent  = s.text;
+
+    if (s.note) {
+      elNote.innerHTML = s.note;
+      elNote.hidden = false;
+    } else {
+      elNote.hidden = true;
+    }
+
+    elSp.textContent = s.sp;
+    elPc.textContent = s.pc;
+
+    for (var r = 0; r < regionIds.length; r++) {
+      var el = document.getElementById(regionIds[r]);
+      var state = s.map[regionIds[r]];
+      el.className = "region"
+        + (regionIds[r] === "r-text" || regionIds[r] === "r-free" ? " grow" : "")
+        + (state ? " " + state : (started ? " idle" : " idle"));
+    }
+
+    elSpMark.className = "sp-marker" + (s.map.spOn ? " on" : "");
+
+    for (var k = 0; k < tickEls.length; k++) {
+      tickEls[k].className = "tick" + (k < i ? " done" : k === i ? " now" : "");
+    }
+
+    btnPrev.disabled = !started || i === 0;
+    btnNext.disabled = !started || i === steps.length - 1;
+
+    if (!started) {
+      btnMain.textContent = "Power on";
+    } else if (i === steps.length - 1) {
+      btnMain.textContent = "Reset";
+    } else {
+      btnMain.textContent = "Step forward";
+    }
+  }
+
+  btnMain.addEventListener("click", function () {
+    if (!started) {
+      started = true;
+      i = 1;
+    } else if (i === steps.length - 1) {
+      started = false;
+      i = 0;
+    } else {
+      i++;
+    }
+    render();
+  });
+
+  btnPrev.addEventListener("click", function () {
+    if (i > 0) { i--; render(); }
+  });
+
+  btnNext.addEventListener("click", function () {
+    if (i < steps.length - 1) { i++; render(); }
+  });
+
+  render();
+</script>

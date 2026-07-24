@@ -1,0 +1,20 @@
+# DAY - 2 : 23rd July 2026, Thursday
+
+- Going through the codebase, but more import is to understand what is app is doing, this part is very difficult
+- Text based reading is not healping much, asking claude to create some visual artifacts
+- Resource hunt is the real challenge
+
+# What i refered
+
+- CAN Bus : https://www.csselectronics.com/pages/can-bus-simple-intro-tutorial
+- CCP/XCP : https://www.csselectronics.com/pages/ccp-xcp-on-can-bus-calibration-protocol#ccp-message-types
+- A2L files : https://www.csselectronics.com/pages/a2l-file-asap2-intro-xcp-on-can-bus
+
+Now I understand everything 🤯
+
+# What I understood:
+
+- What's a CAN Bus, what does it do, how does it work, what are CAN Frames & how they carry data, how that data is decoded
+- What CCP/XCP Protocols are and what do they enable
+- What an A2L file is
+- What signals are we trying to pick
