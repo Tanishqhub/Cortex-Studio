@@ -18,3 +18,4 @@ Now I understand everything 🤯
 - What CCP/XCP Protocols are and what do they enable
 - What an A2L file is
 - What signals are we trying to pick
+- Understood what a firware is and what we are doing here in the app with the C code

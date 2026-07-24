@@ -1,0 +1,12 @@
+# DAY - 3 : 24th July 2026, Friday
+
+- I need to see if there is anything that i am still missing conceptually
+- I am now in a good state of exploring the codebase
+- Little brush up to the UI is done
+
+# Plan of action
+
+- Let me ask claude to write a doc explaing the codebase
+- Also asking claude to answer hypothetical interview questions may help me understand the interviewr mindset and this project even better
+- Reading the code line by line later would make more sence
+- Also I am not sure about the database usage here
