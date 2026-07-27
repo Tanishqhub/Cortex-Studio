@@ -2,3 +2,5 @@
 
 # Plan of action
 - Lots of time wasted, lets deploy the app
+- DEPLOYMENT DONE, TASK Officialy completed
+- Final pending step, codebase review & Documentation needs to be updated
