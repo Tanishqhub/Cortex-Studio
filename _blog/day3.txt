@@ -10,3 +10,5 @@
 - Also asking claude to answer hypothetical interview questions may help me understand the interviewr mindset and this project even better
 - Reading the code line by line later would make more sence
 - Also I am not sure about the database usage here
+
+# Couldnt do all
