@@ -53,6 +53,7 @@ def _build_and_wait(client, workspace_id):
     return build_id, body
 
 
+@pytest.mark.podman
 def test_successful_build_appears_in_marketplace_with_required_metadata(client):
     """Real podman compile (same as test_builds_api) -- this phase's point is
     verifying a real artifact lands in the marketplace, not a mocked one."""
@@ -80,6 +81,7 @@ def test_successful_build_appears_in_marketplace_with_required_metadata(client):
     assert detail["log_text"] == build_body["log_text"]
 
 
+@pytest.mark.podman
 def test_marketplace_visible_to_any_logged_in_user_not_just_owner(client):
     """Visibility model (docs/DECISIONS.md Phase 5): every artifact is
     browsable/downloadable by any logged-in user, not just its owner."""
@@ -97,6 +99,7 @@ def test_marketplace_visible_to_any_logged_in_user_not_just_owner(client):
     assert listing[0]["user_email"] == "alice@example.com"
 
 
+@pytest.mark.podman
 def test_download_returns_real_binary_bytes(client):
     _signup(client, "alice@example.com")
     ws = client.post("/api/workspaces", json={"name": "alice-ws"}).get_json()

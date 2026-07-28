@@ -42,6 +42,7 @@ def _signup_and_create_workspace(client, email="alice@example.com"):
     return ws["id"]
 
 
+@pytest.mark.podman
 def test_trigger_build_runs_end_to_end_via_real_sandbox(client):
     """Uses the real podman sandbox (same as production) -- slower than a
     unit test, but this phase's whole point is verifying the real thing

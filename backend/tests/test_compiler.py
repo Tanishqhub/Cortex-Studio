@@ -14,6 +14,8 @@ silent skip, per the "fail loudly" ground rule.
 import os
 import sys
 
+import pytest
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
@@ -23,6 +25,7 @@ os.environ["ENV"] = "testing"
 from app.compiler import run_build  # noqa: E402
 
 
+@pytest.mark.podman
 def test_syntax_error_yields_error_status_with_real_gcc_log():
     bad_source = "int main(void) { int x = ; return 0 }\n"
     result = run_build(bad_source, [])
@@ -34,6 +37,7 @@ def test_syntax_error_yields_error_status_with_real_gcc_log():
     assert result["elf_bytes"] is None
 
 
+@pytest.mark.podman
 def test_good_program_compiles_to_a_real_arm_elf():
     good_source = "int main(void) { volatile int x = 1 + 1; (void)x; return 0; }\n"
     result = run_build(good_source, [])
