@@ -1,0 +1,6 @@
+# DAY - 7 : 28th July 2026, Monday
+
+# Progress
+
+- Fixed Cloudflare dead tunnel issue
+- Wrote cicd for updates
