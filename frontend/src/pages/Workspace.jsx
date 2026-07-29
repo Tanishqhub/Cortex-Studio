@@ -129,8 +129,46 @@ export default function Workspace() {
     const ident = sanitiseIdentifier(signal.name);
     const editor = editorRef.current;
     if (!editor) return;
+    const model = editor.getModel();
     const selection = editor.getSelection();
-    editor.executeEdits("insert-signal", [{ range: selection, text: ident, forceMoveMarkers: true }]);
+
+    // If the user never placed a cursor in the editor this session, Monaco's
+    // selection sits at the document start -- inserting there would splice
+    // the identifier into whatever's already on line 1 (e.g. the #include).
+    // Fall back to appending at the end of the file instead.
+    const untouched =
+      !editor.hasTextFocus() && selection.isEmpty() && selection.startLineNumber === 1 && selection.startColumn === 1;
+    const range = untouched ? model.getFullModelRange().collapseToEnd() : selection;
+
+    const charBefore = model.getValueInRange({
+      startLineNumber: range.startLineNumber,
+      startColumn: Math.max(1, range.startColumn - 1),
+      endLineNumber: range.startLineNumber,
+      endColumn: range.startColumn,
+    });
+    const charAfter = model.getValueInRange({
+      startLineNumber: range.endLineNumber,
+      startColumn: range.endColumn,
+      endLineNumber: range.endLineNumber,
+      endColumn: range.endColumn + 1,
+    });
+    const isWordChar = (c) => /\w/.test(c);
+
+    const prefix = untouched && model.getValue().trim() ? "\n" : isWordChar(charBefore) ? " " : "";
+    const suffix = isWordChar(charAfter) ? " " : "";
+    const text = prefix + ident + suffix;
+
+    editor.executeEdits("insert-signal", [{ range, text, forceMoveMarkers: true }]);
+
+    // Land the cursor right after the identifier (before any trailing
+    // space) so the user can keep typing, e.g. " = 0;".
+    const insertedLines = text.split("\n");
+    const cursorLine = range.startLineNumber + insertedLines.length - 1;
+    const cursorColumn =
+      insertedLines.length === 1
+        ? range.startColumn + prefix.length + ident.length
+        : insertedLines[insertedLines.length - 1].length - suffix.length + 1;
+    editor.setPosition({ lineNumber: cursorLine, column: cursorColumn });
     editor.focus();
   }
 
