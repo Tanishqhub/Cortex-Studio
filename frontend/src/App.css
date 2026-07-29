@@ -582,9 +582,14 @@
   border-bottom: 1px solid var(--border);
 }
 
-.marketplace-header > div {
+.marketplace-header-text {
   flex: 1;
   min-width: 240px;
+}
+
+.scope-toggle {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .marketplace-header h1,

@@ -53,7 +53,7 @@ export default function Marketplace() {
   return (
     <div className="marketplace-page">
       <header className="marketplace-header">
-        <div>
+        <div className="marketplace-header-text">
           <h1>Marketplace</h1>
           <p className="marketplace-subtitle">
             {scope === "public"
