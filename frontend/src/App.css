@@ -14,7 +14,10 @@
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  padding: 0.7rem 1.5rem;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0.7rem 2rem;
+  box-sizing: border-box;
 }
 
 .navbar-brand {
@@ -119,6 +122,30 @@
   }
 }
 
+@media (max-width: 860px) {
+  .workspace-body {
+    flex-direction: column;
+  }
+  .signal-panel {
+    width: 100%;
+  }
+  .signal-list {
+    height: 40vh;
+  }
+  .workspace-list-page,
+  .workspace-page,
+  .marketplace-page,
+  .artifact-detail-page {
+    padding-left: 1.1rem;
+    padding-right: 1.1rem;
+  }
+  .marketplace-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
 /* Shared element styling (buttons/inputs have no per-component classes,
    so these rules are scoped to the page wrapper classes below). */
 .auth-page,
@@ -136,9 +163,10 @@
 .marketplace-page button,
 .artifact-detail-page button {
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 500;
-  padding: 0.5rem 1rem;
+  line-height: 1.2;
+  padding: 0.55rem 1rem;
   border-radius: 6px;
   border: 1px solid var(--border);
   background: var(--bg);
@@ -162,6 +190,16 @@
 .marketplace-page button:active,
 .artifact-detail-page button:active {
   transform: translateY(1px);
+}
+
+.auth-page button:disabled,
+.workspace-list-page button:disabled,
+.workspace-page button:disabled,
+.marketplace-page button:disabled,
+.artifact-detail-page button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
 }
 
 .auth-page button[type="submit"],
@@ -219,9 +257,9 @@
 
 /* Auth pages */
 .auth-page {
-  max-width: 380px;
-  margin: 4.5rem auto;
-  padding: 2rem;
+  max-width: 400px;
+  margin: 6vh auto;
+  padding: 2.25rem;
   border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: var(--shadow);
@@ -229,8 +267,8 @@
 }
 
 .auth-page h1 {
-  font-size: 1.4rem;
-  margin: 0 0 1.25rem;
+  font-size: 1.5rem;
+  margin: 0 0 1.5rem;
   color: var(--text-h);
 }
 
@@ -271,71 +309,66 @@
 
 /* Workspace list */
 .workspace-list-page {
-  max-width: 720px;
+  max-width: 960px;
   margin: 2.5rem auto;
-  padding: 0 1.5rem 2rem;
+  padding: 0 2rem 3rem;
   text-align: left;
+  box-sizing: border-box;
 }
 
 .workspace-list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 1rem;
+  padding-bottom: 1.25rem;
   border-bottom: 1px solid var(--border);
 }
 
 .workspace-list-header h1 {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   margin: 0;
-}
-
-.workspace-list-header > div {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  font-size: 0.9rem;
 }
 
 .workspace-create-form {
   display: flex;
   gap: 0.6rem;
-  margin: 1.5rem 0;
+  margin: 1.5rem 0 2rem;
 }
 
 .workspace-create-form input {
   flex: 1;
-  padding: 0.55rem 0.7rem;
+  padding: 0.6rem 0.8rem;
+}
+
+.workspace-create-form button {
+  flex-shrink: 0;
+  padding: 0.6rem 1.25rem;
 }
 
 .workspace-list {
   list-style: none;
   padding: 0;
   margin: 0;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  overflow: hidden;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.85rem;
 }
 
 .workspace-list li {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.85rem 1rem;
-  border-bottom: 1px solid var(--border);
-  transition: background 0.15s ease;
-}
-
-.workspace-list li:last-child {
-  border-bottom: none;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .workspace-list li:hover {
   background: var(--code-bg);
+  border-color: var(--accent-border);
 }
 
 .workspace-list li a {
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 1rem;
   color: var(--text-h);
 }
 
@@ -348,8 +381,8 @@
 .workspace-page {
   width: 100%;
   max-width: 1600px;
-  margin: 1.25rem auto 0;
-  padding: 0 1.75rem 2rem;
+  margin: 1.5rem auto 0;
+  padding: 0 2rem 2rem;
   box-sizing: border-box;
   text-align: left;
 }
@@ -359,12 +392,12 @@
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
-  padding-bottom: 1rem;
+  padding-bottom: 1.1rem;
   border-bottom: 1px solid var(--border);
 }
 
 .workspace-header h1 {
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   margin: 0;
   flex: 1;
   color: var(--text-h);
@@ -373,15 +406,32 @@
 .workspace-header-actions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.6rem;
   font-size: 0.9rem;
+}
+
+.workspace-header-actions a {
+  cursor: pointer;
+  padding: 0.5rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-h) !important;
+  text-decoration: none !important;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.workspace-header-actions a:hover {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
 }
 
 .upload-button {
   cursor: pointer;
-  padding: 0.4rem 0.8rem;
+  padding: 0.5rem 0.9rem;
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 500;
 }
 
@@ -501,10 +551,11 @@
 /* Marketplace */
 .marketplace-page,
 .artifact-detail-page {
-  max-width: 960px;
+  max-width: 1120px;
   margin: 2.5rem auto;
-  padding: 0 1.5rem 2rem;
+  padding: 0 2rem 2rem;
   text-align: left;
+  box-sizing: border-box;
 }
 
 .marketplace-header,
