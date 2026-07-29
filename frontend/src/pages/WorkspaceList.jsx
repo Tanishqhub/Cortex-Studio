@@ -58,10 +58,12 @@ export default function WorkspaceList() {
         <ul className="workspace-list">
           {workspaces.map((w) => (
             <li key={w.id}>
-              <Link to={`/workspaces/${w.id}`}>{w.name}</Link>
-              <span className="workspace-meta">
-                {w.has_a2l_file ? "A2L uploaded" : "no A2L uploaded"}
-              </span>
+              <Link to={`/workspaces/${w.id}`} className="workspace-card-link">
+                <span className="workspace-card-name">{w.name}</span>
+                <span className="workspace-meta">
+                  {w.has_a2l_file ? "A2L uploaded" : "no A2L uploaded"}
+                </span>
+              </Link>
             </li>
           ))}
         </ul>

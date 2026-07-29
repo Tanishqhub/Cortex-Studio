@@ -309,7 +309,7 @@
 
 /* Workspace list */
 .workspace-list-page {
-  max-width: 960px;
+  max-width: 1600px;
   margin: 2.5rem auto;
   padding: 0 2rem 3rem;
   text-align: left;
@@ -329,6 +329,7 @@
 .workspace-create-form {
   display: flex;
   gap: 0.6rem;
+  max-width: 560px;
   margin: 1.5rem 0 2rem;
 }
 
@@ -352,21 +353,34 @@
 }
 
 .workspace-list li {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+
+.workspace-list li:hover {
+  border-color: var(--accent-border);
+}
+
+.workspace-card-link {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   padding: 1rem 1.1rem;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  height: 100%;
+  box-sizing: border-box;
+  color: inherit !important;
+  text-decoration: none !important;
+  transition: background 0.15s ease;
 }
 
-.workspace-list li:hover {
+.workspace-list li:hover,
+.workspace-card-link:hover {
   background: var(--code-bg);
-  border-color: var(--accent-border);
 }
 
-.workspace-list li a {
+.workspace-card-name {
   font-weight: 600;
   font-size: 1rem;
   color: var(--text-h);
