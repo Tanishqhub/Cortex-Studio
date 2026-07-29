@@ -7,7 +7,7 @@ function formatBytes(bytes) {
   return `${(bytes / 1024).toFixed(1)} KB`;
 }
 
-export default function Marketplace({ user }) {
+export default function Marketplace() {
   const [artifacts, setArtifacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -22,9 +22,7 @@ export default function Marketplace({ user }) {
   return (
     <div className="marketplace-page">
       <header className="marketplace-header">
-        <Link to="/">&larr; Home</Link>
         <h1>Marketplace</h1>
-        <span>{user.email}</span>
       </header>
       <p className="marketplace-subtitle">
         Every successful build from every workspace/user, browsable and downloadable by any

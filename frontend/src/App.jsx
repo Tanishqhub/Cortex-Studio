@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, Route, Routes, useNavigate } from "react-router-dom";
-import { getCurrentUser, logout } from "./api";
+import { Navigate, Route, Routes } from "react-router-dom";
+import { getCurrentUser } from "./api";
+import Navbar from "./components/Navbar";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import WorkspaceList from "./pages/WorkspaceList";
@@ -8,29 +9,6 @@ import Workspace from "./pages/Workspace";
 import Marketplace from "./pages/Marketplace";
 import ArtifactDetail from "./pages/ArtifactDetail";
 import "./App.css";
-
-function Landing({ user, onLoggedOut }) {
-  const navigate = useNavigate();
-
-  async function handleLogout() {
-    await logout();
-    onLoggedOut();
-    navigate("/login");
-  }
-
-  return (
-    <div className="auth-page">
-      <h1>Logged in as {user.email}</h1>
-      <p>
-        <Link to="/workspaces">Go to workspaces</Link>
-      </p>
-      <p>
-        <Link to="/marketplace">Browse marketplace</Link>
-      </p>
-      <button onClick={handleLogout}>Logout</button>
-    </div>
-  );
-}
 
 function RequireAuth({ user, loading, children }) {
   if (loading) return null;
@@ -49,49 +27,52 @@ export default function App() {
   }, []);
 
   return (
-    <Routes>
-      <Route path="/login" element={<Login onAuthed={setUser} />} />
-      <Route path="/signup" element={<Signup onAuthed={setUser} />} />
-      <Route
-        path="/"
-        element={
-          <RequireAuth user={user} loading={loading}>
-            {user && <Landing user={user} onLoggedOut={() => setUser(null)} />}
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/workspaces"
-        element={
-          <RequireAuth user={user} loading={loading}>
-            {user && <WorkspaceList user={user} onLoggedOut={() => setUser(null)} />}
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/workspaces/:id"
-        element={
-          <RequireAuth user={user} loading={loading}>
-            {user && <Workspace />}
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/marketplace"
-        element={
-          <RequireAuth user={user} loading={loading}>
-            {user && <Marketplace user={user} />}
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/marketplace/:id"
-        element={
-          <RequireAuth user={user} loading={loading}>
-            {user && <ArtifactDetail />}
-          </RequireAuth>
-        }
-      />
-    </Routes>
+    <>
+      {user && <Navbar user={user} onLoggedOut={() => setUser(null)} />}
+      <Routes>
+        <Route path="/login" element={<Login onAuthed={setUser} />} />
+        <Route path="/signup" element={<Signup onAuthed={setUser} />} />
+        <Route
+          path="/"
+          element={
+            <RequireAuth user={user} loading={loading}>
+              <Navigate to="/workspaces" replace />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/workspaces"
+          element={
+            <RequireAuth user={user} loading={loading}>
+              {user && <WorkspaceList />}
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/workspaces/:id"
+          element={
+            <RequireAuth user={user} loading={loading}>
+              {user && <Workspace />}
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/marketplace"
+          element={
+            <RequireAuth user={user} loading={loading}>
+              {user && <Marketplace />}
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/marketplace/:id"
+          element={
+            <RequireAuth user={user} loading={loading}>
+              {user && <ArtifactDetail />}
+            </RequireAuth>
+          }
+        />
+      </Routes>
+    </>
   );
 }

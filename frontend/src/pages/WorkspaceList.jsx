@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { createWorkspace, listWorkspaces, logout } from "../api";
+import { createWorkspace, listWorkspaces } from "../api";
 
-export default function WorkspaceList({ user, onLoggedOut }) {
+export default function WorkspaceList() {
   const [workspaces, setWorkspaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
@@ -31,21 +31,11 @@ export default function WorkspaceList({ user, onLoggedOut }) {
     }
   }
 
-  async function handleLogout() {
-    await logout();
-    onLoggedOut();
-    navigate("/login");
-  }
-
   return (
     <div className="workspace-list-page">
       <header className="workspace-list-header">
         <h1>Workspaces</h1>
-        <div>
-          <Link to="/marketplace">Marketplace</Link>
-          <span>{user.email}</span>
-          <button onClick={handleLogout}>Logout</button>
-        </div>
+        <p className="page-subtitle">Create a workspace, upload an A2L file, and start writing C.</p>
       </header>
 
       <form onSubmit={handleCreate} className="workspace-create-form">

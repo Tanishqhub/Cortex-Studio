@@ -206,7 +206,7 @@ export default function Workspace() {
 
         <main className="editor-pane">
           <Editor
-            height="70vh"
+            height="74vh"
             defaultLanguage="c"
             value={code}
             onChange={(value) => setCode(value ?? "")}
