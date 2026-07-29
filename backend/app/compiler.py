@@ -81,6 +81,13 @@ def run_build(source_code, measurements):
     """
     workdir = tempfile.mkdtemp(prefix="c-sandbox-build-")
     try:
+        # mkdtemp() defaults to 0700, owned by the host user running this
+        # process. Rootless Podman maps that host user to root inside the
+        # container's user namespace, while the sandbox itself runs as a
+        # different, non-root --user (SANDBOX_UID) -- so without opening up
+        # the mode here, the container user can't even cd into /build,
+        # let alone write out.elf/out.bin to it.
+        os.chmod(workdir, 0o777)
         with open(os.path.join(workdir, "user.c"), "w", encoding="utf-8", newline="\n") as f:
             f.write(source_code)
         with open(os.path.join(workdir, "signals.h"), "w", encoding="utf-8", newline="\n") as f:

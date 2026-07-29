@@ -1,0 +1,378 @@
+========================================================================
+DEVOPS.TXT -- How Cortex Studio is deployed, and how CI/CD works
+Written after the fact, describing what was actually done (not a plan).
+See _plan/06_devops_instructions.txt for the original intent this follows.
+========================================================================
+
+--------------------------------------------------------------------
+0. THE SHAPE OF IT, IN ONE PARAGRAPH
+--------------------------------------------------------------------
+One AWS EC2 instance runs everything: Flask (serving the built React SPA
++ the JSON API) under gunicorn, managed by systemd, on a non-root Linux
+user called `cortex`. Each C compile spawns a short-lived, locked-down
+Podman container from that same user (rootless). A Cloudflare Tunnel
+gives the app a public HTTPS URL without opening any inbound web ports.
+GitHub Actions runs the test suite on every push, and on every push to
+`master` that passes, it SSHes into the box as `cortex` and re-deploys.
+
+--------------------------------------------------------------------
+1. THE SERVER: WHAT'S WHERE, AND WHY
+--------------------------------------------------------------------
+Host: AWS EC2, t3.micro, Ubuntu, region eu-north-1 (Stockholm).
+Public IP: 16.171.169.200 (a plain public IP, NOT an Elastic IP yet --
+  if the instance is ever stopped/started this IP will change, which
+  would break both SSH access and the GitHub Actions EC2_HOST secret.
+  Allocating a free Elastic IP and re-associating it is still an open
+  TODO, not yet done).
+
+Two Linux users matter:
+  ubuntu  -- the default AMI user. Has full sudo (NOPASSWD: ALL). Used
+             for anything that needs root: installing packages, resizing
+             disks, editing the security group's effect on the box, etc.
+             Never runs the app itself.
+  cortex  -- a dedicated, sudo-less user created specifically to run the
+             app and the build sandbox. Everything below (`gunicorn`,
+             `podman`, `cloudflared`, the deploy script, the GitHub
+             Actions SSH target) runs as this user. Because it has no
+             sudo, a compromise of the app or a CI secret can't escalate
+             to root on the box. `loginctl enable-linger cortex` was run
+             (as ubuntu) so cortex's systemd --user services keep running
+             even with no one logged in as cortex.
+
+Directory layout on the box (paths are under /home/cortex):
+  ~/Cortex-Studio/              -- git clone of this repo
+    backend/
+      venv/                     -- Python virtualenv (NOT in git; built
+                                   fresh on the box with `virtualenv venv`,
+                                   because `python3 -m venv` needed
+                                   ensurepip which wasn't installed and
+                                   pulling in python3.14-venv was avoidable)
+      .env                      -- real secrets (SECRET_KEY, ENV=production,
+                                   DATABASE_URL, SANDBOX_IMAGE,
+                                   BUILD_WORKER_COUNT). Never in git.
+      wsgi.py                   -- gunicorn's entry point (see section 3)
+      instance/app.db           -- the SQLite database (not in git)
+      instance/uploads/         -- uploaded .a2l files + compiled artifacts
+    frontend/
+      dist/                     -- `npm run build` output; this is what
+                                   Flask actually serves as the SPA. Not
+                                   in git -- rebuilt on every deploy.
+    deploy/server-deploy.sh      -- the script every deploy actually runs
+    .github/workflows/ci-cd.yml  -- the pipeline definition
+
+Why disk had to be grown: the free-tier EC2 root volume defaults to 8GB,
+which isn't enough to build the ~900MB c-sandbox image (Debian +
+arm-none-eabi-gcc toolchain). The EBS volume was resized to 20GB in the
+AWS console, then the partition and filesystem were grown to match with
+`growpart` + `resize2fs` (resizing the EBS volume alone does NOT resize
+the Linux partition sitting on it -- that's a separate, mandatory step).
+
+Why there's 2GB of swapfile: a t3.micro only has 1GB RAM, which is tight
+when a resource-capped build container runs alongside gunicorn. Swap is
+a safety net against OOM kills, not a performance feature.
+
+--------------------------------------------------------------------
+2. THE COMPILE SANDBOX (PODMAN)
+--------------------------------------------------------------------
+Files: backend/sandbox/Containerfile, backend/sandbox/build.sh,
+       backend/app/compiler.py (the code that shells out to `podman run`)
+
+The sandbox image (tagged c-sandbox:latest) is Debian bookworm-slim plus
+the arm-none-eabi-gcc toolchain, built once on the box:
+    podman build -t c-sandbox:latest -f sandbox/Containerfile sandbox
+
+It is NOT rebuilt automatically by the deploy pipeline -- it only changes
+if backend/sandbox/* changes, which is rare. If you ever edit the
+Containerfile, rebuild it manually on the server the same way.
+
+compiler.py runs a brand new container per build with a long list of
+lock-down flags (--network none, --read-only, --cap-drop=ALL, memory/
+pids/cpu caps, a non-root --user, a wall-clock timeout that kills the
+container). See docs/SECURITY.md for the full threat model behind each
+flag -- this file only covers deployment, not the security reasoning.
+
+--------------------------------------------------------------------
+3. RUNNING THE APP: wsgi.py, gunicorn, systemd
+--------------------------------------------------------------------
+backend/app.py (the original dev entry point) and the backend/app/
+package (the actual Flask app factory) share the name "app", which is
+ambiguous to Python's import system -- `gunicorn app:app` resolves to
+the package, not the script, and silently skips app.py's load_dotenv()
+call. backend/wsgi.py exists specifically to remove that ambiguity:
+
+    from dotenv import load_dotenv
+    load_dotenv()
+    from app import create_app
+    app = create_app()
+
+Gunicorn is run against wsgi:app, never app:app.
+
+The app runs as a systemd --user service (NOT a login-session process,
+so it survives closing the terminal, and auto-restarts on crash):
+  unit file:  ~/.config/systemd/user/cortex-studio.service
+  ExecStart:  /home/cortex/Cortex-Studio/backend/venv/bin/gunicorn
+              -w 1 -b 127.0.0.1:8000 wsgi:app
+  Note it binds to 127.0.0.1 only -- it is never directly reachable from
+  the internet; the Cloudflare Tunnel is what exposes it (section 5).
+
+Managing it:
+    export XDG_RUNTIME_DIR=/run/user/$(id -u)   # needed in any fresh
+                                                  # shell before systemctl
+                                                  # --user works
+    systemctl --user status cortex-studio
+    systemctl --user restart cortex-studio
+    journalctl --user -u cortex-studio -f        # tail logs
+
+--------------------------------------------------------------------
+4. DATABASE
+--------------------------------------------------------------------
+SQLite on local disk (backend/instance/app.db), managed with
+Flask-Migrate. No Postgres/R2 -- the DECISIONS.md-style tradeoff here is
+simplicity over durability: if this EC2 instance is ever terminated, the
+database and uploaded files go with it. That's an accepted, documented
+constraint for a free-tier single-instance deployment, not an oversight.
+
+Migrations are applied with (from backend/, venv active):
+    flask db upgrade
+(Flask's CLI auto-discovers wsgi.py/app.py, so FLASK_APP does not need
+to be set explicitly.)
+
+Test accounts were created once with:
+    python3 seed.py
+which prints two generated email/password pairs to stdout -- copy them
+somewhere safe immediately, seed.py does not show them again.
+
+--------------------------------------------------------------------
+5. PUBLIC URL: CLOUDFLARE TUNNEL
+--------------------------------------------------------------------
+The EC2 security group only allows inbound SSH (port 22, TCP, from
+0.0.0.0/0 -- see section 6). No port 80/443/8000 is open. Instead,
+`cloudflared` runs on the box and makes an outbound-only connection to
+Cloudflare, which then proxies a public HTTPS URL to it.
+
+Currently this is a Quick Tunnel (no Cloudflare account/domain wired up
+yet -- growforgeai.in is registered on GoDaddy but has not been migrated
+to Cloudflare nameservers). Quick Tunnels:
+  - give an instant, free, random URL like https://xxx.trycloudflare.com
+  - have NO uptime guarantee per Cloudflare's own terms
+  - get a brand new random URL every time the tunnel process restarts
+
+It runs as its own systemd --user service so it survives terminal
+disconnects and auto-restarts if it crashes:
+  unit file: ~/.config/systemd/user/cortex-tunnel.service
+  ExecStart: /usr/local/bin/cloudflared tunnel --url http://127.0.0.1:8000
+
+To get the current live URL:
+    journalctl --user -u cortex-tunnel -n 50 | grep trycloudflare
+
+OPEN TODO: move growforgeai.in's nameservers to Cloudflare (free plan),
+then replace this Quick Tunnel with a named tunnel routed to something
+like cortex.growforgeai.in -- a permanent hostname that survives
+restarts, instead of a random one that changes.
+
+--------------------------------------------------------------------
+6. NETWORK / SECURITY GROUP
+--------------------------------------------------------------------
+Security group: sg-0e97c7f1d3f9f535c (launch-wizard-4), attached to the
+cortexstudio instance. Inbound rules: exactly one -- SSH/TCP/22 from
+0.0.0.0/0. (It briefly had an "All traffic from 0.0.0.0/0" rule left
+over from the launch wizard default; this was tightened down to just
+SSH once noticed.) Port 22 is open to the whole internet, not just one
+IP, because GitHub Actions runners connect from a huge, constantly
+changing IP range that can't be allowlisted -- this is safe here because
+SSH is key-only (no password auth), and the CI deploy key only grants
+access to the sudo-less `cortex` user.
+
+--------------------------------------------------------------------
+7. CI/CD: GITHUB ACTIONS
+--------------------------------------------------------------------
+File: .github/workflows/ci-cd.yml
+Two jobs, `test` then `deploy`:
+
+  test (runs on every push and PR to master):
+    - checkout, set up Python 3.12, `pip install -r backend/requirements.txt`
+    - `pytest -m "not podman"` inside backend/
+    - set up Node 20, `npm ci && npm run build` inside frontend/
+    Why "not podman": 6 tests shell out to a real `podman run` against
+    the c-sandbox image (they intentionally have no mocked-compiler
+    path -- see backend/tests/test_compiler.py's own docstring). They
+    pass against the real EC2 box (verified manually) but fail on
+    GitHub-hosted runners because of a rootless-Podman/cgroup
+    user-namespace mismatch specific to the shared runner environment --
+    not a bug in the app. They're marked with a custom `podman` pytest
+    marker (registered in backend/pytest.ini) and excluded from CI with
+    that reasoning written directly into the marker description and the
+    workflow's inline comment, rather than silently skipped with no
+    explanation.
+
+  deploy (runs only on a push to master, only if `test` passed):
+    - webfactory/ssh-agent loads a dedicated deploy keypair from the
+      EC2_SSH_KEY secret
+    - ssh-keyscan adds the host key for EC2_HOST to known_hosts
+    - SSHes in as cortex and runs:
+        cd ~/Cortex-Studio && git pull origin master && bash deploy/server-deploy.sh
+
+  Repo secrets used (Settings -> Secrets and variables -> Actions):
+    EC2_HOST     -- 16.171.169.200 (see section 1's Elastic IP caveat --
+                    this secret goes stale if the IP ever changes)
+    EC2_SSH_KEY  -- private half of a keypair generated specifically for
+                    CI (ssh-keygen -t ed25519), whose public half was
+                    appended to /home/cortex/.ssh/authorized_keys on the
+                    server. This key is scoped ONLY to the cortex user
+                    (no sudo) -- it is deliberately not the same key used
+                    for admin/ubuntu SSH access, so it can be rotated or
+                    revoked independently.
+
+File: deploy/server-deploy.sh
+  The actual steps run on the server for every deploy, in order:
+    1. npm ci && npm run build            (frontend/)
+    2. source venv/bin/activate; pip install -r requirements.txt  (backend/)
+    3. set -a; source .env; set +a; flask db upgrade
+    4. systemctl --user restart cortex-studio
+  It assumes the repo is already pulled to the latest commit (the SSH
+  command in ci-cd.yml does the `git pull` before invoking this script).
+
+File: backend/pytest.ini
+  Registers the `podman` marker so pytest doesn't warn about an unknown
+  marker; the marker's own description is the canonical explanation of
+  why those 6 tests are excluded from CI.
+
+--------------------------------------------------------------------
+8. THE FULL SETUP FLOW, END TO END (as if nothing went wrong)
+--------------------------------------------------------------------
+This is the sequence that was actually run, minus the false starts,
+typos, and detours hit along the way. Run as noted (ubuntu@ vs cortex@).
+
+# --- as ubuntu: base OS setup ---
+sudo apt update
+sudo apt install -y podman git
+
+sudo fallocate -l 2G /swapfile        # or: sudo dd if=/dev/zero of=/swapfile bs=1M count=2048
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
+sudo adduser --disabled-password cortex
+sudo loginctl enable-linger cortex
+
+# grow the disk (after bumping the EBS volume to 20GB in the AWS console)
+lsblk                                  # confirm device/partition names
+sudo growpart /dev/nvme0n1 1
+sudo resize2fs /dev/nvme0n1p1
+
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs             # gives Node 20+
+sudo apt install -y virtualenv         # `python3 -m venv` needs ensurepip,
+                                        # which isn't installed by default;
+                                        # `virtualenv` sidesteps that
+
+curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+sudo dpkg -i cloudflared.deb
+
+# --- as cortex: clone, build sandbox, build frontend ---
+sudo -iu cortex
+git clone https://github.com/Tanishqhub/Cortex-Studio.git ~/Cortex-Studio
+cd ~/Cortex-Studio/backend
+podman build -t c-sandbox:latest -f sandbox/Containerfile sandbox
+podman run --rm --entrypoint arm-none-eabi-gcc c-sandbox:latest --version   # sanity check
+podman info | grep rootless                                                # must say true
+
+cd ~/Cortex-Studio/frontend
+npm ci
+npm run build
+
+# --- as cortex: backend env + first run ---
+cd ~/Cortex-Studio/backend
+virtualenv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+python3 -c "import secrets; print(secrets.token_hex(32))"   # copy the output
+cat > .env <<'EOF'
+SECRET_KEY=<paste the generated value here>
+ENV=production
+DATABASE_URL=sqlite:///app.db
+SANDBOX_IMAGE=c-sandbox:latest
+BUILD_WORKER_COUNT=1
+EOF
+
+flask db upgrade
+python3 seed.py            # prints the 2 test accounts -- save them now
+
+# --- as cortex: run permanently under systemd ---
+mkdir -p ~/.config/systemd/user
+cat > ~/.config/systemd/user/cortex-studio.service <<'EOF'
+[Unit]
+Description=Cortex Studio Flask app
+
+[Service]
+WorkingDirectory=/home/cortex/Cortex-Studio/backend
+ExecStart=/home/cortex/Cortex-Studio/backend/venv/bin/gunicorn -w 1 -b 127.0.0.1:8000 wsgi:app
+Restart=always
+
+[Install]
+WantedBy=default.target
+EOF
+
+export XDG_RUNTIME_DIR=/run/user/$(id -u)
+systemctl --user daemon-reload
+systemctl --user enable --now cortex-studio
+curl -i http://127.0.0.1:8000/         # sanity check -- expect HTTP 200
+
+cat > ~/.config/systemd/user/cortex-tunnel.service <<'EOF'
+[Unit]
+Description=Cloudflare Quick Tunnel for Cortex Studio
+After=cortex-studio.service
+
+[Service]
+ExecStart=/usr/local/bin/cloudflared tunnel --url http://127.0.0.1:8000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+EOF
+
+systemctl --user daemon-reload
+systemctl --user enable --now cortex-tunnel
+journalctl --user -u cortex-tunnel -f   # watch for the public *.trycloudflare.com URL
+
+# --- one-time: open SSH to the world (as ubuntu, via the AWS console) ---
+# EC2 console -> security group -> inbound rules -> ensure exactly one
+# rule: SSH / TCP / 22 / source 0.0.0.0/0. Remove any broader "all
+# traffic" rule left over from the launch wizard.
+
+# --- one-time: wire up GitHub Actions deploy access ---
+# (run locally, not on the server)
+ssh-keygen -t ed25519 -f gha_deploy_key -N "" -C "github-actions-deploy"
+# -> add gha_deploy_key.pub to the server:
+sudo -iu cortex
+mkdir -p ~/.ssh && chmod 700 ~/.ssh
+cat >> ~/.ssh/authorized_keys <<'EOF'
+<contents of gha_deploy_key.pub>
+EOF
+chmod 600 ~/.ssh/authorized_keys
+# -> add two GitHub repo secrets (Settings > Secrets and variables > Actions):
+#      EC2_HOST     = <the box's public IP>
+#      EC2_SSH_KEY  = <contents of gha_deploy_key, the PRIVATE half>
+
+# --- from then on: every push to master ---
+git push origin master
+# GitHub Actions runs tests, then (if master + tests passed) SSHes in as
+# cortex and runs: cd ~/Cortex-Studio && git pull origin master && bash deploy/server-deploy.sh
+
+--------------------------------------------------------------------
+9. OPEN TODOs (known, deliberately not yet done)
+--------------------------------------------------------------------
+[ ] Allocate an Elastic IP and re-associate it -- the current public IP
+    is not guaranteed to survive a stop/start, and both SSH access and
+    the EC2_HOST GitHub secret depend on it staying the same.
+[ ] Migrate growforgeai.in's nameservers to Cloudflare, then replace the
+    Quick Tunnel with a named tunnel on a fixed hostname (e.g.
+    cortex.growforgeai.in) instead of a random *.trycloudflare.com URL
+    that changes every time the tunnel service restarts.
+[ ] Consider Cloudflare R2 for artifact/upload storage and/or a managed
+    Postgres if the single-instance SQLite + local-disk durability
+    tradeoff ever stops being acceptable (see section 4).
+========================================================================
