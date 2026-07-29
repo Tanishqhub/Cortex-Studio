@@ -34,8 +34,15 @@ export default function WorkspaceList() {
   return (
     <div className="workspace-list-page">
       <header className="workspace-list-header">
-        <h1>Workspaces</h1>
-        <p className="page-subtitle">Create a workspace, upload an A2L file, and start writing C.</p>
+        <div>
+          <h1>Workspaces</h1>
+          <p className="page-subtitle">Create a workspace, upload an A2L file, and start writing C.</p>
+        </div>
+        {!loading && workspaces.length > 0 && (
+          <span className="workspace-count">
+            {workspaces.length} workspace{workspaces.length === 1 ? "" : "s"}
+          </span>
+        )}
       </header>
 
       <form onSubmit={handleCreate} className="workspace-create-form">
