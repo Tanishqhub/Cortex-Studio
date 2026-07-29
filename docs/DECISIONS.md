@@ -254,26 +254,31 @@ will ask us to defend these.
 
 ## Phase 5
 
-- **Marketplace visibility model: every artifact is browsable AND
-  downloadable by any logged-in user, not owner-restricted.** The phase
-  brief explicitly leaves this to the implementer ("interpret the
-  visibility/sharing model as you see fit — just tell us what you decided")
-  and offers three shapes: all-public, owner-only, or public-browse/
-  owner-download. Chose all-public-to-logged-in-users because it is the
-  literal reading of "successful builds land in a **shared, browsable
-  catalogue**" in the phase goal — a catalogue only its owner can see isn't
-  shared. Rejected:
-  - *Owner-only* — defeats the stated goal of a shared catalogue; would
-    just be a per-workspace build history view, which `GET
-    /api/workspaces/<id>/builds` (Phase 4) already provides.
-  - *Public browse, owner-only download* — adds a second authorization
-    check (compare `Artifact.build.user_id` against the session) purely to
-    prevent something the brief doesn't ask to be prevented; out of scope
-    per ground rule 7 ("no payment/licensing/rating" implies no access-
-    control feature work beyond what's asked either). Still gated behind
-    `login_required` — an anonymous, unauthenticated caller sees nothing.
-  Enforced in exactly one place: `marketplace.py` has no ownership check at
-  all (contrast `workspaces.py::_get_owned_workspace`), by design.
+- **Marketplace visibility model (revised): artifacts are private by
+  default; the owner opts individual artifacts into the shared catalogue.**
+  Originally every artifact was browsable/downloadable by any logged-in
+  user by default (all-public model — see history below), on the reading
+  that "shared, browsable catalogue" implied opt-out rather than opt-in.
+  That was superseded by an explicit product decision: the marketplace must
+  be private unless a build is deliberately made public, and the UI must
+  let a user switch between "my builds" (everything they own, public or
+  not) and "public" (everything anyone has published). Implementation:
+  - `Artifact.is_public` (boolean, default `False`) is the single source of
+    truth. `GET /api/marketplace?scope=public|mine` filters on it (`mine`
+    also requires `Build.user_id == session user`, `public` requires
+    `is_public`). `PATCH /api/artifacts/<id>/visibility` is the only way to
+    flip it, and is owner-checked against `Build.user_id` — the first
+    ownership check this blueprint has needed, now that "private" is a real
+    state instead of a hypothetical.
+  - Detail/download (`GET /api/artifacts/<id>`, `GET
+    /api/artifacts/<id>/download`) 404 (not 403) for a private artifact
+    viewed by a non-owner, so a private artifact's existence isn't
+    leaked by id-guessing.
+  - Rejected keeping the old all-public default and only gating a
+    *separate* "publish" step: the brief was explicit that marketplace
+    access itself — not just some second-order sharing feature — must
+    default closed, so an opt-in `is_public` flag checked at read time is
+    simpler than modeling publish as a distinct lifecycle event.
 
 - **`Artifact` is a thin table that joins through `Build`, not a
   duplicate of Build's data.** The phase 4 hand-off explicitly flagged this:

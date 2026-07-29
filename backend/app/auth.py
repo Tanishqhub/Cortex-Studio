@@ -24,6 +24,13 @@ def _get_current_user():
     return db.session.get(User, user_id)
 
 
+def current_user_id():
+    """Session user id for the current request, or None if unauthenticated.
+    Cheap alternative to _get_current_user() for call sites that only need
+    the id (e.g. ownership checks)."""
+    return session.get("user_id")
+
+
 @auth_bp.post("/signup")
 def signup():
     data = request.get_json(silent=True) or {}

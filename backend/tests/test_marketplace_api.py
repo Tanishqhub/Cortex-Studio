@@ -64,7 +64,9 @@ def test_successful_build_appears_in_marketplace_with_required_metadata(client):
     build_id, build_body = _build_and_wait(client, ws["id"])
     assert build_body["status"] == "success", build_body
 
-    listing = client.get("/api/marketplace").get_json()
+    # New builds are private by default, so the owner's own artifact only
+    # shows up under the "mine" scope until they publish it.
+    listing = client.get("/api/marketplace?scope=mine").get_json()
     assert len(listing) == 1
     entry = listing[0]
     assert entry["build_id"] == build_id
@@ -75,6 +77,8 @@ def test_successful_build_appears_in_marketplace_with_required_metadata(client):
     assert entry["duration_ms"] is not None
     assert entry["created_at"] is not None
     assert entry["build_created_at"] is not None
+    assert entry["is_public"] is False
+    assert entry["is_owner"] is True
     assert "log_text" not in entry  # list view omits the full log
 
     detail = client.get(f"/api/artifacts/{entry['id']}").get_json()
@@ -82,21 +86,43 @@ def test_successful_build_appears_in_marketplace_with_required_metadata(client):
 
 
 @pytest.mark.podman
-def test_marketplace_visible_to_any_logged_in_user_not_just_owner(client):
-    """Visibility model (docs/DECISIONS.md Phase 5): every artifact is
-    browsable/downloadable by any logged-in user, not just its owner."""
+def test_marketplace_private_by_default_until_owner_publishes_it(client):
+    """Visibility model: a new artifact is private to its owner. It only
+    appears in the public scope for other users once the owner marks it
+    public via PATCH /api/artifacts/<id>/visibility."""
     _signup(client, "alice@example.com")
     ws = client.post("/api/workspaces", json={"name": "alice-ws"}).get_json()
     client.put(f"/api/workspaces/{ws['id']}/source", json={"code": "int main(void) { return 0; }"})
     _, build_body = _build_and_wait(client, ws["id"])
     assert build_body["status"] == "success", build_body
 
+    mine = client.get("/api/marketplace?scope=mine").get_json()
+    assert len(mine) == 1
+    artifact_id = mine[0]["id"]
+
     client.post("/api/auth/logout")
     _signup(client, "bob@example.com")
 
-    listing = client.get("/api/marketplace").get_json()
+    # Still private: bob sees nothing in the public scope, and can't reach
+    # the artifact by id either.
+    assert client.get("/api/marketplace?scope=public").get_json() == []
+    assert client.get(f"/api/artifacts/{artifact_id}").status_code == 404
+    # Bob isn't the owner, so he can't publish alice's artifact himself.
+    resp = client.patch(f"/api/artifacts/{artifact_id}/visibility", json={"is_public": True})
+    assert resp.status_code == 403
+
+    client.post("/api/auth/logout")
+    client.post("/api/auth/login", json={"email": "alice@example.com", "password": "supersecret1"})
+    resp = client.patch(f"/api/artifacts/{artifact_id}/visibility", json={"is_public": True})
+    assert resp.status_code == 200
+    assert resp.get_json()["is_public"] is True
+
+    client.post("/api/auth/logout")
+    client.post("/api/auth/login", json={"email": "bob@example.com", "password": "supersecret1"})
+    listing = client.get("/api/marketplace?scope=public").get_json()
     assert len(listing) == 1
     assert listing[0]["user_email"] == "alice@example.com"
+    assert listing[0]["is_owner"] is False
 
 
 @pytest.mark.podman
@@ -107,7 +133,7 @@ def test_download_returns_real_binary_bytes(client):
     _, build_body = _build_and_wait(client, ws["id"])
     assert build_body["status"] == "success", build_body
 
-    entry = client.get("/api/marketplace").get_json()[0]
+    entry = client.get("/api/marketplace?scope=mine").get_json()[0]
 
     resp = client.get(f"/api/artifacts/{entry['id']}/download")
     assert resp.status_code == 200

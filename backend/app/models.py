@@ -131,8 +131,10 @@ class Artifact(db.Model):
     rather than duplicating it -- see docs/DECISIONS.md Phase 5 and the
     phase 4 hand-off note.
 
-    Visibility: every Artifact is browsable/downloadable by any logged-in
-    user (see docs/DECISIONS.md Phase 5 for the chosen model and why).
+    Visibility: an Artifact is private (visible only to the user who owns
+    the workspace it was built in) unless that user explicitly marks it
+    public, at which point it also appears in the shared marketplace
+    catalogue for every logged-in user. See docs/DECISIONS.md Phase 5.
     """
 
     __tablename__ = "artifacts"
@@ -143,10 +145,11 @@ class Artifact(db.Model):
     size_bytes = db.Column(db.Integer, nullable=False)
     download_ref = db.Column(db.String(500), nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    is_public = db.Column(db.Boolean, nullable=False, default=False)
 
     build = db.relationship("Build")
 
-    def to_dict(self, include_log=False):
+    def to_dict(self, include_log=False, viewer_id=None):
         build = self.build
         result = {
             "id": self.id,
@@ -160,6 +163,8 @@ class Artifact(db.Model):
             "user_email": build.user.email if build.user else None,
             "duration_ms": build.duration_ms,
             "build_created_at": build.created_at.isoformat() if build.created_at else None,
+            "is_public": self.is_public,
+            "is_owner": viewer_id is not None and viewer_id == build.user_id,
         }
         if include_log:
             result["log_text"] = build.log_text

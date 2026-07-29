@@ -582,6 +582,11 @@
   border-bottom: 1px solid var(--border);
 }
 
+.marketplace-header > div {
+  flex: 1;
+  min-width: 240px;
+}
+
 .marketplace-header h1,
 .artifact-detail-header h1 {
   font-size: 1.4rem;
@@ -593,7 +598,105 @@
 .marketplace-subtitle {
   font-size: 0.85rem;
   opacity: 0.7;
-  margin: 1rem 0;
+  margin: 0.4rem 0 0;
+}
+
+.marketplace-empty {
+  opacity: 0.75;
+  margin-top: 1rem;
+}
+
+.scope-toggle {
+  display: inline-flex;
+  padding: 0.2rem;
+  gap: 0.15rem;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.scope-toggle-btn {
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.scope-toggle-btn:hover {
+  color: var(--text-h);
+}
+
+.scope-toggle-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.visibility-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.visibility-badge.public {
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+@media (prefers-color-scheme: dark) {
+  .visibility-badge.public {
+    color: #4ade80;
+  }
+}
+
+.visibility-badge.private {
+  background: var(--code-bg);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+button.visibility-badge.toggle {
+  cursor: pointer;
+  font: inherit;
+}
+
+button.visibility-badge.toggle:hover {
+  filter: brightness(0.95);
+}
+
+button.visibility-badge.toggle:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.visibility-switch-btn {
+  margin-left: 0.75rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 0.8rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.visibility-switch-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.visibility-switch-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .marketplace-table {

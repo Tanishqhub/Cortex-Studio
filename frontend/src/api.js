@@ -91,12 +91,19 @@ export function getBuild(buildId) {
   return request(`/builds/${buildId}`);
 }
 
-export function listMarketplace() {
-  return request("/marketplace");
+export function listMarketplace(scope = "public") {
+  return request(`/marketplace?scope=${scope}`);
 }
 
 export function getArtifact(id) {
   return request(`/artifacts/${id}`);
+}
+
+export function setArtifactVisibility(id, isPublic) {
+  return request(`/artifacts/${id}/visibility`, {
+    method: "PATCH",
+    body: JSON.stringify({ is_public: isPublic }),
+  });
 }
 
 export function artifactDownloadUrl(id) {
